@@ -15,7 +15,7 @@ This distribution of Chameleon consists of the following files:
 
 ## UCI parameters
 
-Currently, Stockfish has the following UCI options:
+Currently, Chameleon has the following UCI options:
 
   * #### Contempt
     A positive value for contempt favors middle game positions and avoids draws.
@@ -31,7 +31,7 @@ Currently, Stockfish has the following UCI options:
     Clear the hash table.
 
   * #### Ponder
-    Let Stockfish ponder its next move while the opponent is thinking.
+    Let Chameleon ponder its next move while the opponent is thinking.
 
   * #### MultiPV
     Output the N best lines (principal variations, PVs) when searching.
@@ -45,7 +45,7 @@ Currently, Stockfish has the following UCI options:
     Search for at least x ms per move. 
 
   * #### Slow Mover
-    Lower values will make Stockfish take less time in games, higher values will 
+    Lower values will make Chameleon take less time in games, higher values will 
     make it think longer.
     
   * #### Nodes Time
