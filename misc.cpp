@@ -34,41 +34,6 @@ using namespace std;
 // Debug functions used mainly to collect run-time statistics
 static int64_t hits[2], means[2];
 
-const string cpu_getbrand()
-{
-	int buf[4];
-	char brand[48];
-	string s = "<Unknown CPU>";
-
-	// Function 0x80000000: Largest Extended Function Number
-	brand[47] = '\0';
-	__cpuid(buf, 0x80000000);
-
-	if (buf[0] >= 0x80000004)
-	{
-		// Function 80000002h,80000003h,80000004h: Processor Brand String
-		__cpuid((int *)&brand[0], 0x80000002);
-		__cpuid((int *)&brand[16], 0x80000003);
-		__cpuid((int *)&brand[32], 0x80000004);
-		s = brand;
-		s.erase(0, s.find_first_not_of(" "));
-		s.erase(s.find_last_not_of(" ") + 1);
-	}
-	return s;
-}
-
-const string memory_getsize()
-{
-	char size[48];
-	MEMORYSTATUSEX statex;
-
-	statex.dwLength = sizeof(MEMORYSTATUSEX);
-	GlobalMemoryStatusEx(&statex);
-	sprintf(size, "%Iu", statex.ullTotalPhys / 1024);
-
-	return string(size) + "K OK";
-}
-
 // engine_info() returns the full name of the current Stockfish version. This
 // will be either "Stockfish <Tag> DD-MM-YY" (where DD-MM-YY is the date when
 // the program was compiled) or "Stockfish <Version>", depending on whether
@@ -77,20 +42,15 @@ const string engine_info(bool to_uci)
 {
 	stringstream s; // From compiler, format is "Sep 21 2008"
 
-	if (!to_uci)
+	if (to_uci)
 	{
-		s << "Chameleon - A UCI Chinese Chess Playing Engine\n";
-		s << "Copyright (C) 2017, Stockfish Development Team, Wilbert\n";
-		s << "\n SF2C-ES FC\n\n";
-		s << "Engineering Release, Not For Production Use\n";
-		s << "Compile On: " <<  "Jul 11 2017" << "\n";
-		s << "Main Processor: " << cpu_getbrand() << "\n";
-		s << "Memory Testing: " << memory_getsize() << "\n";
+		s << "id name SF2C-ES" << "\n";
+		s << "id author Wilbert Lee" << "\n";
 	}
 	else
 	{
-		s << "id name SF2C-ES FC" << "\n";
-		s << "id author Tester" << "\n";
+		s << "uciok" << "\n";
+		s << "info initend" << "\n";
 	}
 	return s.str();
 }
