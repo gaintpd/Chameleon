@@ -188,7 +188,7 @@ enum Depth
 	DEPTH_QS_RECAPTURES = -5,
 
 	DEPTH_NONE = -6,
-	DEPTH_MAX = MAX_PLY * MAX_PLY//MAX_PLY
+	DEPTH_MAX = 8 * MAX_PLY
 };
 
 enum BlockType
