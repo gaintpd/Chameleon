@@ -43,12 +43,12 @@ Bitboard::operator bool() const{
 	return bb[0] || bb[1];
 }
 
-int Bitboard::operator == (const Bitboard& board) const{
+bool Bitboard::operator == (const Bitboard& board) const{
 	return bb[0] == board.bb[0] &&
 		bb[1] == board.bb[1];
 }
 
-int Bitboard::operator != (const Bitboard& board) const{
+bool Bitboard::operator != (const Bitboard& board) const{
 	return bb[0] != board.bb[0] ||
 		bb[1] != board.bb[1];
 }
@@ -81,6 +81,7 @@ Bitboard &Bitboard::operator |=(const Bitboard &board)
 {
 	bb[0] |= board.bb[0];
 	bb[1] |= board.bb[1];
+
 	return *this;
 }
 

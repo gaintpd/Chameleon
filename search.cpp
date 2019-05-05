@@ -279,8 +279,8 @@ void MainThread::search()
 	}
 
 	// Send new PV when needed
-	if (bestThread != this)
-		sync_cout << UCI::pv(bestThread->rootPos, bestThread->completedDepth, -VALUE_INFINITE, VALUE_INFINITE) << sync_endl;
+	// if (bestThread != this)
+	// 	sync_cout << UCI::pv(bestThread->rootPos, bestThread->completedDepth, -VALUE_INFINITE, VALUE_INFINITE) << sync_endl;
 
 	sync_cout << "bestmove " << UCI::move(bestThread->rootMoves[0].pv[0], false);
 
@@ -530,6 +530,7 @@ namespace
 		bestValue = -VALUE_INFINITE;
 		ss->ply = (ss - 1)->ply + 1;
 		assert(!pos.in_check(~pos.side_to_move()));
+
 		// Check for available remaining time
 		if (thisThread->resetCalls.load(std::memory_order_relaxed))
 		{
@@ -550,7 +551,7 @@ namespace
 
 		if (!RootNode)
 		{
-			//check repeat check
+			// Check repeat check
 			int rep = pos.is_repeat();
 			if (rep != REPEATE_NONE)
 			{
@@ -797,9 +798,6 @@ namespace
 			extension = DEPTH_ZERO;
 			captureOrPromotion = pos.capture(move);
 
-			//givesCheck =  type_of(move) == NORMAL && !ci.dcCandidates
-			//            ? ci.checkSquares[type_of(pos.piece_on(from_sq(move)))] & to_sq(move)
-			//            : pos.gives_check(move, ci);
 			givesCheck = move_is_check(pos, move);
 
 			// Step 12. Extend checks
@@ -850,7 +848,6 @@ namespace
 					&& cmh[pos.moved_piece(move)][to_sq(move)] < VALUE_ZERO)
 					continue;
 
-				//bug fixed predictedDepth = newDepth - reduction<PvNode>(improving, depth, moveCount);
 				predictedDepth = std::max(newDepth - reduction<PvNode>(improving, depth, moveCount), DEPTH_ZERO);
 
 				// Futility pruning: parent node
@@ -1019,9 +1016,6 @@ namespace
 		// All legal moves have been searched and if there are no legal moves, it
 		// must be mate or stalemate. If we are in a singular extension search then
 		// return a fail low score.
-		//if (!moveCount)
-		//	bestValue = excludedMove ? alpha
-		//	: inCheck ? mated_in(ss->ply) : DrawValue[pos.side_to_move()];
 		if (!moveCount)
 			bestValue = excludedMove ? alpha : mated_in(ss->ply);
 
@@ -1087,7 +1081,7 @@ namespace
 		ss->currentMove = bestMove = MOVE_NONE;
 		ss->ply = (ss - 1)->ply + 1;
 
-		//check repeat check
+		// Check repeat check
 		int rep = pos.is_repeat();
 		if (rep != REPEATE_NONE)
 		{
@@ -1176,9 +1170,6 @@ namespace
 		{
 			assert(is_ok(move));
 
-			//givesCheck =  type_of(move) == NORMAL && !ci.dcCandidates
-			//            ? ci.checkSquares[type_of(pos.piece_on(from_sq(move)))] & to_sq(move)
-			//            : pos.gives_check(move, ci);
 			givesCheck = move_is_check(pos, move);
 
 			// Futility pruning
@@ -1187,8 +1178,6 @@ namespace
 				&&  futilityBase > -VALUE_KNOWN_WIN
 				&& !pos.advanced_pawn_push(move))
 			{
-				//assert(type_of(move) != ENPASSANT); // Due to !pos.advanced_pawn_push
-
 				futilityValue = futilityBase + PieceValue[EG][pos.piece_on(to_sq(move))];
 
 				if (futilityValue <= alpha)

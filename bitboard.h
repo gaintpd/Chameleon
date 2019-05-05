@@ -31,8 +31,8 @@ public:
 	Bitboard();
 	Bitboard(uint64_t low, uint64_t hig);
 	operator bool() const;
-	int operator == (const Bitboard& board) const;
-	int operator != (const Bitboard& board) const;
+	bool operator == (const Bitboard& board) const;
+	bool operator != (const Bitboard& board) const;
 	Bitboard operator ~() const;
 	Bitboard operator &(const Bitboard& board) const;
 	Bitboard operator |(const Bitboard& board) const;
