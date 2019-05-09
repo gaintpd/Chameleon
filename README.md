@@ -6,7 +6,7 @@ Chameleon is a free, powerful UCI chess engine derived from Stockfish. It is not
 
 This distribution of Chameleon consists of the following files:
 
-  * Readme.md, the file you are currently reading.
+  * README.md, the file you are currently reading.
 
   * LICENSE, a text file containing the GNU General Public License version 3.
 
