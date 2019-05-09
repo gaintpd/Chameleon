@@ -10,8 +10,7 @@ This distribution of Chameleon consists of the following files:
 
   * LICENSE, a text file containing the GNU General Public License version 3.
 
-  * src, a directory containing the full source code, including a sln
-    that can be used to compile Chameleon on Windows systems.
+  * src, a directory containing the full source code.
 
 ## UCI parameters
 
