@@ -48,8 +48,8 @@ namespace Zobrist
 
 Value PieceValue[PHASE_NB][PIECE_NB] =
 {
-	{ VALUE_ZERO, PAWN_VALUE_MG * (int)VALUE_RATIO, ADVISOR_VALUE_MG * (int)VALUE_RATIO, BISHOP_VALUE_MG * (int)VALUE_RATIO, KNIGHT_VALUE_MG * (int)VALUE_RATIO, CANNON_VALUE_MG * (int)VALUE_RATIO, ROOK_VALUE_MG * (int)VALUE_RATIO },
-	{ VALUE_ZERO, PAWN_VALUE_EG * (int)VALUE_RATIO, ADVISOR_VALUE_EG * (int)VALUE_RATIO, BISHOP_VALUE_EG * (int)VALUE_RATIO, KNIGHT_VALUE_EG * (int)VALUE_RATIO, CANNON_VALUE_EG * (int)VALUE_RATIO, ROOK_VALUE_EG * (int)VALUE_RATIO }
+	{ VALUE_ZERO, PawnValueMg * (int)PieceRatio, AdvisorValueMg * (int)PieceRatio, BishopValueMg * (int)PieceRatio, KnightValueMg * (int)PieceRatio, CannonValueMg * (int)PieceRatio, RookValueMg * (int)PieceRatio },
+	{ VALUE_ZERO, PawnValueEg * (int)PieceRatio, AdvisorValueEg * (int)PieceRatio, BishopValueEg * (int)PieceRatio, KnightValueEg * (int)PieceRatio, CannonValueEg * (int)PieceRatio, RookValueEg * (int)PieceRatio }
 };
 
 static const string PieceToChar(" PABNCRK pabncrk");
@@ -371,9 +371,9 @@ Phase Position::game_phase() const
 {
 	Value npm = st->nonPawnMaterial[WHITE] + st->nonPawnMaterial[BLACK];
 
-	npm = std::max(EG_LIMIT, std::min(npm, MG_LIMIT));
+	npm = std::max(EgLimit, std::min(npm, MgLimit));
 
-	return Phase(((npm - EG_LIMIT) * PHASE_MIDGAME) / (MG_LIMIT - EG_LIMIT));
+	return Phase(((npm - EgLimit) * PHASE_MIDGAME) / (MgLimit - EgLimit));
 }
 
 // Position::check_blockers() returns a bitboard of all the pieces with color

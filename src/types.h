@@ -84,8 +84,8 @@
 
 const int MAX_PLY = 128;
 const int MAX_MOVES = 256;
-const int MAX_HASH_MB = 1024 * 1024;
-const int MAX_THREAD_COUNT = MAX_HASH_MB / 1024 / 2;
+const int MAX_HASH_MB = 1048576;
+const int MAX_THREAD_COUNT = 64;
 const int MIN_HASH_MB = 16;
 const int MIN_THREAD_COUNT = 1;
 const int DEFAULT_HASH_MB = 512;
@@ -93,8 +93,8 @@ const int DEFAULT_THREAD_COUNT = 1;
 
 // A move needs 16 bits to be stored
 //
-// bit  0- 7: destination square (from 0 to 255)
-// bit  8-15: origin square (from 0 to 255)
+// 0 - 7: Destination square (from 0 to 255)
+// 8 -15: Origin square (from 0 to 255)
 
 // Special cases are MOVE_NONE and MOVE_NULL. We can sneak these in because in
 // any normal move destination square is always different from origin square
@@ -149,17 +149,17 @@ enum Value : int
 	VALUE_MATE = 30000,
 	VALUE_INFINITE = 30001,
 	VALUE_NONE = 30002,
-	VALUE_RATIO = 8,
 	VALUE_MATE_IN_MAX_PLY = VALUE_MATE - 2 * MAX_PLY,
 	VALUE_MATED_IN_MAX_PLY = -VALUE_MATE + 2 * MAX_PLY,
 
-	MG_LIMIT = 15581, EG_LIMIT = 3998,
-	PAWN_VALUE_MG = 12, PAWN_VALUE_EG = 16,
-	ADVISOR_VALUE_MG = 18, ADVISOR_VALUE_EG = 20,
-	BISHOP_VALUE_MG = 20, BISHOP_VALUE_EG = 22,
-	KNIGHT_VALUE_MG = 30, KNIGHT_VALUE_EG = 36,
-	CANNON_VALUE_MG = 36, CANNON_VALUE_EG = 30,
-	ROOK_VALUE_MG = 68, ROOK_VALUE_EG = 80,
+	PieceRatio = 8,
+	MgLimit = 15581, EgLimit = 3998,
+	PawnValueMg = 12, PawnValueEg = 16,
+	AdvisorValueMg = 18, AdvisorValueEg = 20,
+	BishopValueMg = 20, BishopValueEg = 22,
+	KnightValueMg = 30, KnightValueEg = 36,
+	CannonValueMg = 36, CannonValueEg = 30,
+	RookValueMg = 68, RookValueEg = 80,
 };
 
 enum PieceType

@@ -347,7 +347,6 @@ ExtMove* generate_pawn_moves(const Position& pos,
 
 	while (attup)
 	{
-
 		Square to = pop_lsb(&attup);
 		Square from = to - (Up);
 		if (from == exclued)	continue;
@@ -356,7 +355,6 @@ ExtMove* generate_pawn_moves(const Position& pos,
 
 	while (attleft)
 	{
-
 		Square to = pop_lsb(&attleft);
 		Square from = to - (Left);
 		if (from == exclued)	continue;
@@ -365,7 +363,6 @@ ExtMove* generate_pawn_moves(const Position& pos,
 
 	while (attright)
 	{
-
 		Square to = pop_lsb(&attright);
 		Square from = to - (Right);
 		if (from == exclued)	continue;

@@ -28,6 +28,7 @@
 #include <sstream>
 
 #include "evaluate.h"
+#include "book.h"
 #include "misc.h"
 #include "movegen.h"
 #include "movepick.h"
@@ -78,41 +79,28 @@ namespace
 		return Reductions[PvNode][i][std::min(d, 63 * ONE_PLY)][std::min(mn, 63)];
 	}
 
+	// Skill struct is used to implement strength limiting
+	struct Skill
+	{
+		Skill(int l) : level(l) {}
+		bool Skill::enabled() const { return level < 20; }
+		bool Skill::time_to_pick(Depth depth) const { return depth / ONE_PLY == 1 + level; }
+		Move Skill::best_move(size_t multiPV) { return best ? best : pick_best(multiPV); }
+
+		Move pick_best(size_t multiPV);
+
+		int level;
+		Move best = MOVE_NONE;
+	};
+
 	// EasyMoveManager struct is used to detect a so called 'easy move'; when PV is
 	// stable across multiple search iterations we can fast return the best move.
 	struct EasyMoveManager
 	{
-		void clear()
-		{
-			stableCnt = 0;
-			expectedPosKey = 0;
-			pv[0] = pv[1] = pv[2] = MOVE_NONE;
-		}
+		void clear() { stableCnt = 0; expectedPosKey = 0; pv[0] = pv[1] = pv[2] = MOVE_NONE; }
+		Move get(uint64_t key) const { return expectedPosKey == key ? pv[2] : MOVE_NONE; }
 
-		Move get(uint64_t key) const
-		{
-			return expectedPosKey == key ? pv[2] : MOVE_NONE;
-		}
-
-		void update(Position& pos, const std::vector<Move>& newPv)
-		{
-			assert(newPv.size() >= 3);
-
-			// Keep track of how many times in a row 3rd ply remains stable
-			stableCnt = (newPv[2] == pv[2]) ? stableCnt + 1 : 0;
-
-			if (!std::equal(newPv.begin(), newPv.begin() + 3, pv))
-			{
-				std::copy(newPv.begin(), newPv.begin() + 3, pv);
-
-				StateInfo st[2];
-				pos.do_move(newPv[0], st[0], pos.gives_check(newPv[0], CheckInfo(pos)));
-				pos.do_move(newPv[1], st[1], pos.gives_check(newPv[1], CheckInfo(pos)));
-				expectedPosKey = pos.key();
-				pos.undo_move(newPv[1]);
-				pos.undo_move(newPv[0]);
-			}
-		}
+		void update(Position& pos, const std::vector<Move>& newPv);
 
 		int stableCnt;
 		uint64_t expectedPosKey;
@@ -135,7 +123,6 @@ namespace
 	void update_pv(Move* pv, Move move, Move* childPv);
 	void update_stats(const Position& pos, Stack* ss, Move move, Depth depth, Move* quiets, int quietsCnt);
 	void check_time();
-
 } // namespace
 
 // Search::init() is called during startup to initialize various lookup tables
@@ -212,6 +199,8 @@ template uint64_t Search::perft<true>(Position&, Depth);
 // the "bestmove" to output.
 void MainThread::search()
 {
+	static PolyglotBook book; // Defined static to initialize the PRNG only once
+
 	Color us = rootPos.side_to_move();
 	Time.init(Limits, us, rootPos.game_ply());
 
@@ -243,11 +232,23 @@ void MainThread::search()
 		Thread::search();
 	}
 
+	if (Options["Own Book"] && !Limits.infinite && !Limits.mate)
+	{
+		Move bookMove = book.probe(rootPos, Options["Book File"], Options["Best Book Move"]);
+
+		if (bookMove && std::count(rootMoves.begin(), rootMoves.end(), bookMove))
+		{
+			std::swap(rootMoves[0], *std::find(rootMoves.begin(), rootMoves.end(), bookMove));
+			goto finalize;
+		}
+	}
+
 	// When playing in 'nodes as time' mode, subtract the searched nodes from
 	// the available ones before to exit.
 	if (Limits.npmsec)
 		Time.availableNodes += Limits.inc[us] - Threads.nodes_searched();
 
+finalize:
 	// When we reach the maximum depth, we can arrive here without a raise of
 	// Signals.stop. However, if we are pondering or in an infinite search,
 	// the UCI protocol states that we shouldn't print the best move before the
@@ -270,7 +271,8 @@ void MainThread::search()
 	// Check if there are threads with a better score than main thread
 	Thread* bestThread = this;
 	if (!this->easyMovePlayed
-		&&  Options["MultiPV"] == 1)
+		&&  Options["Multi PV"] == 1
+		&& !Skill(Options["Skill Level"]).enabled())
 	{
 		for (Thread* th : Threads)
 			if (th->completedDepth > bestThread->completedDepth
@@ -316,8 +318,13 @@ void Thread::search()
 		TT.new_search();
 	}
 
-	size_t multiPV = Options["MultiPV"];
+	size_t multiPV = Options["Multi PV"];
+	Skill skill(Options["Skill Level"]);
 
+	// When playing with strength handicap enable MultiPV search that we will
+	// use behind the scenes to retrieve a set of possible moves.
+	if (skill.enabled())
+		multiPV = std::max(multiPV, (size_t)4);
 	multiPV = std::min(multiPV, rootMoves.size());
 
 	// Iterative deepening loop until requested to stop or target depth reached
@@ -350,7 +357,7 @@ void Thread::search()
 
 		// Age out PV variability metric
 		if (mainThread)
-			mainThread->bestMoveChanges *= 0.505, mainThread->failedLow = false;
+			mainThread->bestMoveChanges *= 0.8, mainThread->failedLow = false;
 
 		// Save the last iteration's scores before first PV line is searched and
 		// all the move scores except the (new) PV are set to -VALUE_INFINITE.
@@ -688,7 +695,7 @@ namespace
 				// Do not return unproven mate scores
 				if (nullValue >= VALUE_MATE_IN_MAX_PLY)
 					nullValue = beta;
-
+				
 				if (depth < 12 * ONE_PLY && abs(beta) < VALUE_KNOWN_WIN)
 					return nullValue;
 
@@ -1335,6 +1342,58 @@ namespace
 		}
 	}
 
+	// When playing with strength handicap, choose best move among a set of RootMoves
+	// using a statistical rule dependent on 'level'. Idea by Heinz van Saanen.
+	Move Skill::pick_best(size_t multiPV)
+	{
+		const Search::RootMoveVector& rootMoves = Threads.main()->rootMoves;
+		static PRNG rng(now()); // PRNG sequence should be non-deterministic
+
+		// RootMoves are already sorted by score in descending order
+		Value topScore = rootMoves[0].score;
+		int delta = std::min(topScore - rootMoves[multiPV - 1].score, PawnValueMg);
+		int weakness = 120 - 2 * level;
+		int maxScore = -VALUE_INFINITE;
+
+		// Choose best move. For each move score we add two terms, both dependent on
+		// weakness. One deterministic and bigger for weaker levels, and one random,
+		// then we choose the move with the resulting highest score.
+		for (size_t i = 0; i < multiPV; ++i)
+		{
+			// This is our magic formula
+			int push = (weakness * int(topScore - rootMoves[i].score)
+				+ delta * (rng.rand<unsigned>() % weakness)) / 128;
+
+			if (rootMoves[i].score + push > maxScore)
+			{
+				maxScore = rootMoves[i].score + push;
+				best = rootMoves[i].pv[0];
+			}
+		}
+
+		return best;
+	}
+
+	void EasyMoveManager::update(Position& pos, const std::vector<Move>& newPv)
+	{
+		assert(newPv.size() >= 3);
+
+		// Keep track of how many times in a row 3rd ply remains stable
+		stableCnt = (newPv[2] == pv[2]) ? stableCnt + 1 : 0;
+
+		if (!std::equal(newPv.begin(), newPv.begin() + 3, pv))
+		{
+			std::copy(newPv.begin(), newPv.begin() + 3, pv);
+
+			StateInfo st[2];
+			pos.do_move(newPv[0], st[0], pos.gives_check(newPv[0], CheckInfo(pos)));
+			pos.do_move(newPv[1], st[1], pos.gives_check(newPv[1], CheckInfo(pos)));
+			expectedPosKey = pos.key();
+			pos.undo_move(newPv[1]);
+			pos.undo_move(newPv[0]);
+		}
+	}
+
 	// check_time() is used to print debug info and, more importantly, to detect
 	// when we are out of available time and thus stop the search.
 	void check_time()
@@ -1369,7 +1428,7 @@ string UCI::pv(const Position& pos, Depth depth, Value alpha, Value beta)
 	int elapsed = Time.elapsed() + 1;
 	const Search::RootMoveVector& rootMoves = pos.this_thread()->rootMoves;
 	size_t PVIdx = pos.this_thread()->PVIdx;
-	size_t multiPV = std::min((size_t)Options["MultiPV"], rootMoves.size());
+	size_t multiPV = std::min((size_t)Options["Multi PV"], rootMoves.size());
 	uint64_t nodes_searched = Threads.nodes_searched();
 
 	for (size_t i = 0; i < multiPV; i++)

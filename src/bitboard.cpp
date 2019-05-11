@@ -26,73 +26,6 @@
 #include "bitcount.h"
 #include "misc.h"
 
-const uint64_t Bitboard::BIT_MASK = 0x1FFFFFFFFFFF;
-
-Bitboard::Bitboard()
-{
-	bb[0] = bb[1] = 0;
-}
-
-Bitboard::Bitboard(uint64_t low, uint64_t hig)
-{
-	bb[0] = low&BIT_MASK;
-	bb[1] = hig&BIT_MASK;
-}
-
-Bitboard::operator bool() const{
-	return bb[0] || bb[1];
-}
-
-bool Bitboard::operator == (const Bitboard& board) const{
-	return bb[0] == board.bb[0] &&
-		bb[1] == board.bb[1];
-}
-
-bool Bitboard::operator != (const Bitboard& board) const{
-	return bb[0] != board.bb[0] ||
-		bb[1] != board.bb[1];
-}
-
-Bitboard Bitboard::operator ~() const{
-	return Bitboard(~bb[0], ~bb[1]);
-}
-
-Bitboard Bitboard::operator &(const Bitboard& board) const{
-	return Bitboard(bb[0] & board.bb[0], bb[1] & board.bb[1]);
-}
-
-Bitboard Bitboard::operator |(const Bitboard& board) const{
-	return Bitboard(bb[0] | board.bb[0], bb[1] | board.bb[1]);
-}
-
-Bitboard Bitboard::operator ^(const Bitboard &board) const
-{
-	return Bitboard(bb[0] ^ board.bb[0], bb[1] ^ board.bb[1]);
-}
-
-Bitboard &Bitboard::operator &=(const Bitboard &board)
-{
-	bb[0] &= board.bb[0];
-	bb[1] &= board.bb[1];
-
-	return *this;
-}
-Bitboard &Bitboard::operator |=(const Bitboard &board)
-{
-	bb[0] |= board.bb[0];
-	bb[1] |= board.bb[1];
-
-	return *this;
-}
-
-Bitboard &Bitboard::operator ^=(const Bitboard &board)
-{
-	bb[0] ^= board.bb[0];
-	bb[1] ^= board.bb[1];
-
-	return *this;
-}
-
 Bitboard Bitboard::operator <<(int bit)
 {
 	if (bit < 0)
@@ -105,7 +38,7 @@ Bitboard Bitboard::operator <<(int bit)
 		return Bitboard(0, 0);
 }
 
-Bitboard Bitboard::operator >> (int bit)
+Bitboard Bitboard::operator >>(int bit)
 {
 	if (bit < 0)
 		return *this << -bit;
@@ -144,7 +77,6 @@ Bitboard &Bitboard::operator <<=(int bit)
 		bb[0] = 0;
 		bb[1] = 0;
 	}
-
 	return *this;
 }
 
@@ -171,24 +103,18 @@ Bitboard &Bitboard::operator >>=(int bit)
 		bb[0] = 0;
 		bb[1] = 0;
 	}
-
 	return *this;
 }
 
 void Bitboard::pop_lsb()
 {
 	if (bb[0])
-	{
 		bb[0] &= bb[0] - 1;
-	}
 	else if (bb[1])
-	{
 		bb[1] &= bb[1] - 1;
-	}
-
 }
 
-bool Bitboard::more_than_one()const
+bool Bitboard::more_than_one() const
 {
 	uint32_t c = 0;
 
@@ -197,18 +123,16 @@ bool Bitboard::more_than_one()const
 		if (bb[0] & (bb[0] - 1)) return true; // > 1
 		++c;
 	}
-
 	if (bb[1])
 	{
 		if (c)  return true;	// > 1
 		if (bb[1] & (bb[1] - 1)) return true; // > 1
 		++c;
 	}
-
 	return c > 1;
 }
 
-bool Bitboard::equal_to_two()const
+bool Bitboard::equal_to_two() const
 {
 	uint32_t c = 0;
 	uint64_t t = bb[0];
@@ -216,15 +140,15 @@ bool Bitboard::equal_to_two()const
 	while (t)	{
 		t &= t - 1;
 		++c;
-		if (c > 2) return false;
+		if (c > 2)
+			return false;
 	}
-
 	t = bb[1];
 	while (t)	{
 		t &= t - 1;
 		++c;
-		if (c > 2) return false;
+		if (c > 2)
+			return false;
 	}
-
 	return c == 2;
 }

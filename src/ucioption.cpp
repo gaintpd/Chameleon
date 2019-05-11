@@ -37,6 +37,7 @@ UCI::OptionsMap Options; // Global object
 namespace UCI
 {
 	// 'On change' actions, triggered by an option's value change
+	void on_logger(const Option& o) { start_logger(o); }
 	void on_clear_hash(const Option&) { Search::clear(); }
 	void on_hash_size(const Option& o) { TT.resize(o); }
 	void on_threads(const Option&) { Threads.read_uci_options(); }
@@ -51,12 +52,19 @@ namespace UCI
 	// init() initializes the UCI options to their hard-coded default values
 	void init()
 	{
+		Options["Write Debug Log"] << Option(false, on_logger);
+		Options["Write Search Log"] << Option(false);
+		Options["Search Log Filename"] << Option("search.log");
+		Options["Book File"] << Option("book.bin");
+		Options["Best Book Move"] << Option(false);
 		Options["Contempt"] << Option(0, -100, 100);
 		Options["Threads"] << Option(DEFAULT_THREAD_COUNT, MIN_THREAD_COUNT, MAX_THREAD_COUNT, on_threads);
 		Options["Hash"] << Option(DEFAULT_HASH_MB, MIN_HASH_MB, MAX_HASH_MB, on_hash_size);
 		Options["Clear Hash"] << Option(on_clear_hash);
 		Options["Ponder"] << Option(false);
-		Options["MultiPV"] << Option(1, 1, 500);
+		Options["Own Book"] << Option(false);
+		Options["Multi PV"] << Option(1, 1, 500);
+		Options["Skill Level"] << Option(20, 0, 20);
 		Options["Move Overhead"] << Option(20, 0, 5000);
 		Options["Minimum Thinking Time"] << Option(20, 0, 5000);
 		Options["Slow Mover"] << Option(84, 10, 1000);

@@ -29,6 +29,7 @@
 #include "bitcount.h"
 #include "evaluate.h"
 #include "material.h"
+#include "thread.h"
 #include "pawns.h"
 
 namespace Trace {
@@ -41,7 +42,7 @@ namespace Trace {
 
 	double scores[TERM_NB][COLOR_NB][PHASE_NB];
 
-	double to_cp(Value v) { return double(v) / PAWN_VALUE_EG; }
+	double to_cp(Value v) { return double(v) / PawnValueEg; }
 
 	void add(int idx, Color c, Score s) {
 		scores[idx][c][MG] = to_cp(mg_value(s));
@@ -123,6 +124,9 @@ Score operator*(Score s, const Weight& w) {
 
 #define V(v) Value(v)
 #define S(mg, eg) make_score(mg, eg)
+
+// Evaluation grain size, must be a power of 2
+const int GrainSize = 4;
 
 // MobilityBonus[PieceType][attacked] contains bonuses for middle and end
 // game, indexed by piece type and number of attacked squares in the MobilityArea.
@@ -220,7 +224,6 @@ const int BishopCheck = 6;
 const int KnightCheck = 14;
 const int CannonCheck = 16;
 
-
 // eval_init() initializes king and attack bitboards for given color
 // adding pawn attacks. To be done at the beginning of the evaluation.
 template<Color Us>
@@ -235,7 +238,7 @@ void eval_init(const Position& pos, EvalInfo& ei) {
 	ei.attackedBy[Us][ALL_PIECES] |= ei.attackedBy[Us][PAWN] = ei.pi->pawn_attacks(Us);
 
 	// Init king safety tables only if we are going to use them
-	if (pos.non_pawn_material(Us) >= ROOK_VALUE_MG)
+	if (pos.non_pawn_material(Us) >= RookValueMg)
 	{
 		ei.kingRing[Them] = b | shift_bb(b, Down);
 		b &= ei.attackedBy[Us][PAWN];
@@ -249,6 +252,55 @@ void eval_init(const Position& pos, EvalInfo& ei) {
 	}
 }
 
+// init_eval_info() initializes king bitboards for given color adding
+// pawn attacks. To be done at the beginning of the evaluation.
+template<Color Us>
+void init_eval_info(const Position& pos, EvalInfo& ei) {
+
+	const Color  Them = (Us == WHITE ? BLACK : WHITE);
+	const Square Down = (Us == WHITE ? DELTA_S : DELTA_N);
+	const Square Up = (Us == WHITE ? DELTA_N : DELTA_S);
+	const Square Right = (Us == WHITE ? DELTA_E : DELTA_W);
+	const Square Left = (Us == WHITE ? DELTA_W : DELTA_E);
+
+	Square ksq = pos.square<KING>(Them);
+
+	ei.pinnedPieces[Us] = pos.pinned_pieces(pos.side_to_move());
+
+	//->ei.attackedBy[Them][KING] = pos.attacks_from<KING>(ksq, Them);
+	ei.attackedBy[Us][ALL_PIECES] = ei.attackedBy[Us][PAWN] = ei.pi->pawn_attacks(Us);
+
+	//attacks_from<KING> can only calc sq in city
+	Bitboard b = (shift_bb(SquareBB[ksq], Right) | shift_bb(SquareBB[ksq], Left) | shift_bb(SquareBB[ksq], Up) | shift_bb(SquareBB[ksq], Down));
+
+	// Init king safety tables only if we are going to use them
+	ei.kingRing[Them] = b | shift_bb(b, Down)/*|shift_bb<Right>(b)|shift_bb<Left>(b)|shift_bb<Up>(b)*/;
+	b &= ei.attackedBy[Us][PAWN];
+	ei.kingAttackersCount[Us] = b ? popcount<CNT_64>(b) : 0;
+	ei.kingAdjacentZoneAttacksCount[Us] = ei.kingAttackersWeight[Us] = 0;
+
+}
+
+// interpolate() interpolates between a middle game and an endgame score,
+// based on game phase. It also scales the return value by a ScaleFactor array.
+Value interpolate(const Score& v, Phase ph, ScaleFactor sf) {
+
+	assert(mg_value(v) > -VALUE_INFINITE && mg_value(v) < VALUE_INFINITE);
+	assert(eg_value(v) > -VALUE_INFINITE && eg_value(v) < VALUE_INFINITE);
+	assert(ph >= PHASE_ENDGAME && ph <= PHASE_MIDGAME);
+
+	int e = (eg_value(v) * int(sf)) / SCALE_FACTOR_NORMAL;
+	int r = (mg_value(v) * int(ph) + e * int(PHASE_MIDGAME - ph)) / PHASE_MIDGAME;
+
+	assert((r / GrainSize) * GrainSize > -VALUE_INFINITE && (r / GrainSize) * GrainSize < VALUE_INFINITE);
+	return Value((r / GrainSize) * GrainSize); // Sign independent
+}
+
+// apply_weight() weights score v by score w trying to prevent overflow
+Score apply_weight(Score v, Score w) {
+	return make_score((int(mg_value(v)) * mg_value(w)) / 0x100,
+		(int(eg_value(v)) * eg_value(w)) / 0x100);
+}
 
 // evaluate_pieces() assigns bonuses and penalties to the pieces of a given
 // color and type.
@@ -275,22 +327,46 @@ Value Eval::evaluate(const Position& pos) {
 	assert(!pos.checkers());
 
 	EvalInfo ei;
+	Value margins[COLOR_NB];
 	Score score, mobility[COLOR_NB] = { SCORE_ZERO, SCORE_ZERO };
+	Thread* th = pos.this_thread();
+
+	// margins[] store the uncertainty estimation of position's evaluation
+	// that typically is used by the search for pruning decisions.
+	margins[WHITE] = margins[BLACK] = VALUE_ZERO;
 
 	// Initialize score by reading the incrementally updated scores included in
 	// the position object (material + piece square tables). Score is computed
 	// internally from the white point of view.
-	score = pos.psq_score();
+	score = (Score)(pos.psq_score() + (pos.side_to_move() == WHITE ? Tempo : -Tempo));
 
+	// Probe the material hash table
+	ei.me = Material::probe(pos);
+	//score += ei.me->imbalance();
+
+	// If we have a specialized evaluation function for the current material
+	// configuration, call it and return.
+	if (ei.me->specialized_eval_exists())
+	{
+		return ei.me->evaluate(pos);
+	}
+
+	// Probe the pawn hash table
+	ei.pi = Pawns::probe(pos);
+	//score += apply_weight(ei.pi->pawns_score(), make_score(Weights[PawnStructure].mg, Weights[PawnStructure].eg));
+
+	// Initialize attack and king safety bitboards
+	init_eval_info<WHITE>(pos, ei);
+	init_eval_info<BLACK>(pos, ei);
+
+
+	// Scale winning side if position is more drawish that what it appears
 	ScaleFactor sf = SCALE_FACTOR_NONE;
 
 	// Interpolate between a middlegame and a (scaled by 'sf') endgame score
-	Value v = mg_value(score) * int(PHASE_MIDGAME)
-		+ eg_value(score) * int(PHASE_MIDGAME - PHASE_MIDGAME) * sf / SCALE_FACTOR_NORMAL;
+	Value v = mg_value(score);
 
-	v /= int(PHASE_MIDGAME);
-
-	return (pos.side_to_move() == WHITE ? v : -v);
+	return pos.side_to_move() == WHITE ? v : -v;
 }
 
 // Explicit template instantiations

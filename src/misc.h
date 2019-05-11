@@ -26,6 +26,7 @@
 #include <cassert>
 #include <chrono>
 #include <ostream>
+#include <fstream>
 #include <string>
 #include <vector>
 
@@ -40,6 +41,7 @@ enum SyncCout
 typedef std::chrono::milliseconds::rep TimePoint; // A value in milliseconds
 
 void prefetch(void* addr);
+void start_logger(bool b);
 void dbg_hit_on(bool b);
 void dbg_hit_on(bool c, bool b);
 void dbg_mean_of(int v);
@@ -52,10 +54,16 @@ inline TimePoint now()
 		(std::chrono::steady_clock::now().time_since_epoch()).count();
 }
 
+struct Log : public std::ofstream
+{
+	Log(const std::string& f = "log.txt") : std::ofstream(f.c_str(), std::ios::out | std::ios::app)	{}
+	~Log() { if (is_open()) close(); }
+};
+
 template<class Entry, int Size>
 struct HashTable
 {
-	Entry* operator[](uint64_t key) { return &table[(uint32_t)key & (Size - 1)]; }
+	Entry* operator[](uint64_t key)	{ return &table[(uint32_t)key & (Size - 1)]; }
 private:
 	std::vector<Entry> table = std::vector<Entry>(Size);
 };

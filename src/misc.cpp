@@ -44,34 +44,20 @@ const string engine_info(bool to_uci)
 
 	if (to_uci)
 	{
-		s << "id name SF2C-ES" << "\n";
-		s << "id author Wilbert Lee" << "\n";
+		s << "id name SF2C-ES" << "\n"
+			<< "id author Wilbert Lee" << "\n";
 	}
 	else
 	{
-		s << "uciok" << "\n";
-		s << "info initend" << "\n";
+		s << "uciok" << "\n"
+			<< "info initend" << "\n";
 	}
 	return s.str();
 }
 
-void dbg_hit_on(bool b)
-{
-	++hits[0];
-	if (b)
-		++hits[1];
-}
-
-void dbg_hit_on(bool c, bool b)
-{
-	if (c) dbg_hit_on(b);
-}
-
-void dbg_mean_of(int v)
-{
-	++means[0];
-	means[1] += v;
-}
+void dbg_hit_on(bool b) { ++hits[0]; if (b) ++hits[1]; }
+void dbg_hit_on(bool c, bool b) { if (c) dbg_hit_on(b); }
+void dbg_mean_of(int v) { ++means[0]; means[1] += v; }
 
 void dbg_print()
 {
@@ -83,6 +69,62 @@ void dbg_print()
 		cerr << "Total " << means[0] << " Mean "
 		<< (double)means[1] / means[0] << endl;
 }
+
+// Our fancy logging facility. The trick here is to replace cin.rdbuf() and
+// cout.rdbuf() with two Tie objects that tie cin and cout to a file stream. We
+// can toggle the logging of std::cout and std:cin at runtime while preserving
+// usual i/o functionality and without changing a single line of code!
+// Idea from http://groups.google.com/group/comp.lang.c++/msg/1d941c0f26ea0d81
+struct Tie : public streambuf
+{
+	// MSVC requires splitted streambuf for cin and cout
+	Tie(streambuf* b, ofstream* f) : buf(b), file(f) {}
+	int sync() { return file->rdbuf()->pubsync(), buf->pubsync(); }
+	int overflow(int c) { return log(buf->sputc((char)c), "<< "); }
+	int underflow() { return buf->sgetc(); }
+	int uflow() { return log(buf->sbumpc(), ">> "); }
+
+	streambuf* buf;
+	ofstream* file;
+
+	int log(int c, const char* prefix)
+	{
+		static int last = '\n';
+
+		if (last == '\n')
+			file->rdbuf()->sputn(prefix, 3);
+
+		return last = file->rdbuf()->sputc((char)c);
+	}
+};
+
+class Logger
+{
+	Logger() : in(cin.rdbuf(), &file), out(cout.rdbuf(), &file) {}
+	~Logger() { start(false); }
+
+	ofstream file;
+	Tie in, out;
+
+public:
+	static void start(bool b)
+	{
+		static Logger l;
+
+		if (b && !l.file.is_open())
+		{
+			l.file.open("io_log.txt", ifstream::out | ifstream::app);
+			cin.rdbuf(&l.in);
+			cout.rdbuf(&l.out);
+		}
+		else if (!b && l.file.is_open())
+		{
+			cout.rdbuf(l.out.buf);
+			cin.rdbuf(l.in.buf);
+			l.file.close();
+		}
+	}
+};
 
 // Used to serialize access to std::cout to avoid multiple threads writing at
 // the same time.
@@ -98,6 +140,9 @@ std::ostream& operator<<(std::ostream& os, SyncCout sc)
 
 	return os;
 }
+
+// Trampoline helper to avoid moving Logger to misc.h
+void start_logger(bool b) { Logger::start(b); }
 
 // prefetch() preloads the given address in L1/L2 cache. This is a non-blocking
 // function that doesn't stall the CPU waiting for data to be loaded from memory,
