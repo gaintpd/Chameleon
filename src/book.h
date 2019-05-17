@@ -22,15 +22,43 @@
 
 #ifndef BOOK_H_INCLUDED
 #define BOOK_H_INCLUDED
+#define NOMINMAX
 
 #include <fstream>
 #include <string>
 
 #include "position.h"
+#include "curl/curl.h"
 #include "rkiss.h"
 #include "misc.h"
 
-class PolyglotBook : private std::ifstream
+class YunBook final
+{
+public:
+	YunBook() { curl_global_init(CURL_GLOBAL_DEFAULT); };
+	~YunBook() { curl_global_cleanup(); };
+	Move probe(const Position& pos);
+	Score probe_score(const Position& pos);
+	std::vector<Move> probe_pv(const Position& pos, bool pickBest);
+	std::vector<Position *> probe_pv_pos(const Position& pos, bool pickBest);
+
+private:
+	bool query(const Position& pos, const std::string act);
+	static size_t cb(const char *d, size_t n, size_t l, void *p);
+	static void split(const std::string str, const std::string delim, std::vector<std::string> &ret);
+
+	CURL *curl;
+	CURLcode res;
+
+	// Yunbook address
+	const static std::string url;
+	const static std::string pick[];
+	static Depth depth;
+	static Score score;
+	static std::vector<std::string> moves;
+};
+
+class PolyglotBook final : private std::ifstream
 {
 public:
 	PolyglotBook() : rkiss(now()) {};

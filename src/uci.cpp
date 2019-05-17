@@ -31,11 +31,13 @@
 #include "thread.h"
 #include "timeman.h"
 #include "uci.h"
+#include "book.h"
 
 using namespace std;
 
 // FEN string of the initial position, normal chess
-const char* StartFEN = "rnbakabnr/9/1c5c1/p1p1p1p1p/9/9/P1P1P1P1P/1C5C1/9/RNBAKABNR w - - 0 1";
+const char* StartFEN = 
+"rnbakabnr/9/1c5c1/p1p1p1p1p/9/9/P1P1P1P1P/1C5C1/9/RNBAKABNR w";
 
 // Stack to keep track of the position states along the setup moves (from the
 // start position to the position just before the search starts). Needed by
@@ -64,13 +66,11 @@ void position(Position& pos, istringstream& is)
 
 	else
 	{
-		while (token != "moves")//bing he UI
+		while (token != "moves")
 		{
 			fen += token + " ";
 			if (!(is >> token))
-			{
 				break;
-			}
 		}
 	}
 
@@ -112,10 +112,19 @@ void setoption(istringstream& is)
 // the search.
 void go(const Position& pos, istringstream& is)
 {
+	std::string token;
+	Move mv;
+	//std::vector<Move> mvs;
 	Search::LimitsType limits;
-	string token;
+	static YunBook ybook;
 
 	limits.startTime = now(); // As early as possible!
+
+	// What a bad place to insert this code
+	//for (int i = mvs.size() - 1; i >= 0; i--)
+	//mv = ybook.probe(pos);
+	//if (mv != MOVE_NONE)
+	//	limits.searchmoves.push_back(mv);
 
 	while (is >> token)
 		if (token == "searchmoves")

@@ -56,13 +56,13 @@ namespace UCI
 		Options["Write Search Log"] << Option(false);
 		Options["Search Log Filename"] << Option("search.log");
 		Options["Book File"] << Option("book.bin");
-		Options["Best Book Move"] << Option(false);
+		Options["Best Book Move"] << Option(true);
 		Options["Contempt"] << Option(0, -100, 100);
 		Options["Threads"] << Option(DEFAULT_THREAD_COUNT, MIN_THREAD_COUNT, MAX_THREAD_COUNT, on_threads);
 		Options["Hash"] << Option(DEFAULT_HASH_MB, MIN_HASH_MB, MAX_HASH_MB, on_hash_size);
 		Options["Clear Hash"] << Option(on_clear_hash);
 		Options["Ponder"] << Option(false);
-		Options["Own Book"] << Option(false);
+		Options["Own Book"] << Option(true);
 		Options["Multi PV"] << Option(1, 1, 500);
 		Options["Skill Level"] << Option(20, 0, 20);
 		Options["Move Overhead"] << Option(20, 0, 5000);

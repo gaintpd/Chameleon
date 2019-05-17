@@ -31,6 +31,8 @@
 #include "material.h"
 #include "thread.h"
 #include "pawns.h"
+#include "book.h"
+#include "timeman.h"
 
 namespace Trace {
 	// First 8 entries are for PieceType
@@ -327,46 +329,115 @@ Value Eval::evaluate(const Position& pos) {
 	assert(!pos.checkers());
 
 	EvalInfo ei;
-	Value margins[COLOR_NB];
 	Score score, mobility[COLOR_NB] = { SCORE_ZERO, SCORE_ZERO };
-	Thread* th = pos.this_thread();
-
-	// margins[] store the uncertainty estimation of position's evaluation
-	// that typically is used by the search for pruning decisions.
-	margins[WHITE] = margins[BLACK] = VALUE_ZERO;
+	static YunBook yb;
+	static std::vector<Position *> pos_pv;
 
 	// Initialize score by reading the incrementally updated scores included in
 	// the position object (material + piece square tables). Score is computed
 	// internally from the white point of view.
-	score = (Score)(pos.psq_score() + (pos.side_to_move() == WHITE ? Tempo : -Tempo));
+	score = pos.psq_score();
 
+	ScaleFactor sf = SCALE_FACTOR_NONE;
+
+	// Interpolate between a middlegame and a (scaled by 'sf') endgame score
+	Value v2, v = mg_value(score) * int(PHASE_MIDGAME)
+		+ eg_value(score) * int(PHASE_MIDGAME - PHASE_MIDGAME) * sf / SCALE_FACTOR_NORMAL;
+
+	v /= int(PHASE_MIDGAME);
+
+	return (pos.side_to_move() == WHITE ? v : -v) + Eval::Tempo;
+#if 1
 	// Probe the material hash table
 	ei.me = Material::probe(pos);
-	//score += ei.me->imbalance();
+	score += ei.me->imbalance();
 
 	// If we have a specialized evaluation function for the current material
 	// configuration, call it and return.
 	if (ei.me->specialized_eval_exists())
-	{
 		return ei.me->evaluate(pos);
-	}
 
 	// Probe the pawn hash table
 	ei.pi = Pawns::probe(pos);
-	//score += apply_weight(ei.pi->pawns_score(), make_score(Weights[PawnStructure].mg, Weights[PawnStructure].eg));
+	score += ei.pi->pawns_score() * Weights[PawnStructure];
 
 	// Initialize attack and king safety bitboards
-	init_eval_info<WHITE>(pos, ei);
-	init_eval_info<BLACK>(pos, ei);
+	ei.attackedBy[WHITE][ALL_PIECES] = ei.attackedBy[BLACK][ALL_PIECES] = Bitboard();
+	eval_init<WHITE>(pos, ei);
+	eval_init<BLACK>(pos, ei);
 
+	// Pawns blocked or on ranks 2 and 3 will be excluded from the mobility area
+	Bitboard blockedPawns[] = {
+	  pos.pieces(WHITE, PAWN) & (shift_bb(pos.pieces(),DELTA_S) | Rank2BB | Rank3BB),
+	  pos.pieces(BLACK, PAWN) & (shift_bb(pos.pieces(),DELTA_N) | Rank7BB | Rank6BB)
+	};
 
-	// Scale winning side if position is more drawish that what it appears
-	ScaleFactor sf = SCALE_FACTOR_NONE;
+	// Do not include in mobility area squares protected by enemy pawns, or occupied
+	// by our blocked pawns or king.
+	Bitboard mobilityArea[] = {
+	  ~(ei.attackedBy[BLACK][PAWN] | blockedPawns[WHITE] | pos.square<KING>(WHITE)),
+	  ~(ei.attackedBy[WHITE][PAWN] | blockedPawns[BLACK] | pos.square<KING>(BLACK))
+	};
+
+	// Evaluate all pieces but king and pawns
+	score += evaluate_pieces<DoTrace>(pos, ei, mobility, mobilityArea);
+	score += mobility[WHITE] - mobility[BLACK];
+
+	// Evaluate kings after all other pieces because we need full attack
+	// information when computing the king safety evaluation.
+	//score += evaluate_king<WHITE, DoTrace>(pos, ei)
+	//	- evaluate_king<BLACK, DoTrace>(pos, ei);
+
+	// Evaluate tactical threats, we need full attack information including king
+	//score += evaluate_threats<WHITE, DoTrace>(pos, ei)
+	//	- evaluate_threats<BLACK, DoTrace>(pos, ei);
+
+	// Evaluate passed pawns, we need full attack information including king
+	//score += evaluate_passed_pawns<WHITE, DoTrace>(pos, ei)
+	//	- evaluate_passed_pawns<BLACK, DoTrace>(pos, ei);
+
+	// If both sides have only pawns, score for potential unstoppable pawns
+	if (!pos.non_pawn_material(WHITE) && !pos.non_pawn_material(BLACK))
+	{
+		Bitboard b;
+		if ((b = ei.pi->passed_pawns(WHITE)) != 0)
+			score += Unstoppable * int(relative_rank(WHITE, frontmost_sq(WHITE, b)));
+
+		if ((b = ei.pi->passed_pawns(BLACK)) != 0)
+			score -= Unstoppable * int(relative_rank(BLACK, frontmost_sq(BLACK, b)));
+	}
+
+	// Evaluate space for both sides, only during opening
+	//if (pos.non_pawn_material(WHITE) + pos.non_pawn_material(BLACK) >= 12222)
+	//	score += (evaluate_space<WHITE>(pos, ei)
+	//		- evaluate_space<BLACK>(pos, ei)) * Weights[Space];
+
+	// Evaluate position potential for the winning side
+	//score += evaluate_initiative(pos, ei.pi->pawn_asymmetry(), eg_value(score));
+
+	// Evaluate scale factor for the winning side
+	//sf = evaluate_scale_factor(pos, ei, score);
 
 	// Interpolate between a middlegame and a (scaled by 'sf') endgame score
-	Value v = mg_value(score);
+	v = mg_value(score) * int(ei.me->game_phase())
+		+ eg_value(score) * int(PHASE_MIDGAME - ei.me->game_phase()) * sf / SCALE_FACTOR_NORMAL;
 
-	return pos.side_to_move() == WHITE ? v : -v;
+	v /= int(PHASE_MIDGAME);
+
+	// In case of tracing add all remaining individual evaluation terms
+	/*if (DoTrace)
+	{
+		Trace::add(MATERIAL, pos.psq_score());
+		Trace::add(IMBALANCE, ei.me->imbalance());
+		Trace::add(PAWN, ei.pi->pawns_score() * Weights[PawnStructure]);
+		Trace::add(MOBILITY, mobility[WHITE], mobility[BLACK]);
+		Trace::add(SPACE, evaluate_space<WHITE>(pos, ei) * Weights[Space]
+			, evaluate_space<BLACK>(pos, ei) * Weights[Space]);
+		Trace::add(TOTAL, score);
+	}*/
+
+	return (pos.side_to_move() == WHITE ? v : -v) + Eval::Tempo; // Side to move point of view
+#endif
 }
 
 // Explicit template instantiations

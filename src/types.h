@@ -159,7 +159,7 @@ enum Value : int
 	BishopValueMg = 20, BishopValueEg = 22,
 	KnightValueMg = 30, KnightValueEg = 36,
 	CannonValueMg = 36, CannonValueEg = 30,
-	RookValueMg = 68, RookValueEg = 80,
+	RookValueMg = 60, RookValueEg = 70,
 };
 
 enum PieceType

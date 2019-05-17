@@ -199,6 +199,7 @@ template uint64_t Search::perft<true>(Position&, Depth);
 // the "bestmove" to output.
 void MainThread::search()
 {
+	static YunBook ybook;
 	static PolyglotBook book; // Defined static to initialize the PRNG only once
 
 	Color us = rootPos.side_to_move();
@@ -217,6 +218,30 @@ void MainThread::search()
 	}
 	else
 	{
+		if (Options["Own Book"]/* && !Limits.infinite*/ && !Limits.mate)
+		{
+			Move bookMove = book.probe(rootPos, Options["Book File"], Options["Best Book Move"]);
+			std::vector<Move> ybookMove = ybook.probe_pv(rootPos, false);
+
+			if (bookMove && std::count(rootMoves.begin(), rootMoves.end(), bookMove))
+			{
+				std::swap(rootMoves[0], *std::find(rootMoves.begin(), rootMoves.end(), bookMove));
+				//goto finalize;
+			}
+			else if (ybookMove.size() != 0 && std::count(rootMoves.begin(), rootMoves.end(), ybookMove[0]))
+			{
+				std::swap(rootMoves[0], *std::find(rootMoves.begin(), rootMoves.end(), ybookMove[0]));
+				rootMoves[0].previousScore = rootMoves[0].score = (Value)ybook.probe_score(rootPos);
+				rootMoves[0].pv.clear();
+
+				for (int i = 0; i < ybookMove.size(); i++)
+					rootMoves[0].pv.push_back(ybookMove[i]);
+
+				sync_cout << UCI::pv(rootPos, ONE_PLY, -VALUE_INFINITE, VALUE_INFINITE) << sync_endl;
+				goto finalize;
+			}
+		}
+
 		for (Thread* th : Threads)
 		{
 			th->maxPly = 0;
@@ -232,17 +257,6 @@ void MainThread::search()
 		Thread::search();
 	}
 
-	if (Options["Own Book"] && !Limits.infinite && !Limits.mate)
-	{
-		Move bookMove = book.probe(rootPos, Options["Book File"], Options["Best Book Move"]);
-
-		if (bookMove && std::count(rootMoves.begin(), rootMoves.end(), bookMove))
-		{
-			std::swap(rootMoves[0], *std::find(rootMoves.begin(), rootMoves.end(), bookMove));
-			goto finalize;
-		}
-	}
-
 	// When playing in 'nodes as time' mode, subtract the searched nodes from
 	// the available ones before to exit.
 	if (Limits.npmsec)
@@ -254,7 +268,7 @@ finalize:
 	// the UCI protocol states that we shouldn't print the best move before the
 	// GUI sends a "stop" or "ponderhit" command. We therefore simply wait here
 	// until the GUI sends one of those commands (which also raises Signals.stop).
-	if (!Signals.stop && (Limits.ponder || Limits.infinite))
+	if (!Signals.stop && (Limits.ponder/* || Limits.infinite*/))
 	{
 		Signals.stopOnPonderhit = true;
 		wait(Signals.stop);
@@ -696,7 +710,7 @@ namespace
 				if (nullValue >= VALUE_MATE_IN_MAX_PLY)
 					nullValue = beta;
 				
-				if (depth < 12 * ONE_PLY && abs(beta) < VALUE_KNOWN_WIN)
+				if (depth < 24 * ONE_PLY && abs(beta) < VALUE_KNOWN_WIN)
 					return nullValue;
 
 				// Do verification search at high depths
