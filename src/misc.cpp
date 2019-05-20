@@ -43,15 +43,11 @@ const string engine_info(bool to_uci)
 	stringstream s; // From compiler, format is "Sep 21 2008"
 
 	if (to_uci)
-	{
-		s << "id name SF2C-ES" << "\n"
-			<< "id author Wilbert Lee" << "\n";
-	}
-	else
-	{
-		s << "uciok" << "\n"
-			<< "info initend" << "\n";
-	}
+		s << "id name Chameleon" << "\n"
+			<< "id user Default" << "\n"
+			<< "id author Wilbert Lee" << "\n"
+			<< "id copyright 2017 Wilbert Lee";
+
 	return s.str();
 }
 

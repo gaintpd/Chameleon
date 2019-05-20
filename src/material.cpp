@@ -33,34 +33,36 @@ using namespace std;
 //                      pair  pawn advisor bishop knight cannon  rook 
 const int Linear[7] =
 {
-	1667, -168, -168,
-	-166, -1027,-138,  238,
+	/*1667, -168, -168,
+	-166, -1027,-138,  238,*/
+	0, -290, -156,
+	-153, -975, 127, 141
 };
 
 const int QuadraticOurs[][PIECE_TYPE_NB] =
 {
 	//            OUR PIECES
 	// pair pawn advisor bishop knight bishop rook
-	{  1667                                       }, // Bishop pair
-	{  40,    2                                   }, // Pawn
-	{                                             }, // advisor
-	{  0,  104,   4,    0                         }, // Bishop
-	{  32,  255,  -3                              }, // Knight      OUR PIECES
-	{ -26,   -2,  47,   105,  -149                }, // Cannon
-	{ -185,   24,  122,   137,  -134, 0           }  // Rook    
+		{  0,                                          }, // Bishop pair
+		{  0,   25,                                    }, // Pawn
+		{  0,   -58,  45,    -89,                      }, //Advisor
+		{  0,  -100,  50,                              }, //Bishop
+		{  0,    -45,  -100,     -74,    55,            }, // Knight
+		{  0,    -90,  55,     -5,    -55,     40,      }, // cannon
+		{  0,    10,   30,     -29,     21,    75,    25}, // Rook
 };
 
 const int QuadraticTheirs[][PIECE_TYPE_NB] =
 {
 	//           THEIR PIECES
-	// pair pawn knight bishop rook queen
-	{  0                                }, // Bishop pair
-	{ 36,    0                          }, // Pawn
-	{                                   }, // Advisor
-	{ 59,   65,  42,     0              }, // Bishop
-	{  9,   63,  0                      }, // Knight
-	{  46,   39,  24,   -24,    0       }, // Cannon
-	{ 101,  100, -37,   141,  268,    0 }  // Rook
+	// pair pawn knight bishop rook
+		{  0                                              }, // Bishop pair
+		{  0,   -15,                                      }, // Pawn
+		{  0,   -61,    24,    -95                        }, // Advisor
+		{  0,   -100,    65                               }, // Bishop 
+		{  0,   80,    10,   10,     -65                  }, // Knight      OUR PIECES
+		{  0,   94,   46,  95,    -93,    32              }, // cannon
+		{  0,   27,   5,   26,     95,    -52,   90       }, // Rook
 };
 
 // imbalance() calculates the imbalance by comparing the piece count of each

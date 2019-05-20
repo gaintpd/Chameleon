@@ -218,30 +218,33 @@ void MainThread::search()
 	}
 	else
 	{
-		if (Options["Own Book"]/* && !Limits.infinite*/ && !Limits.mate)
+		if (Options["Own Book"]/* && !Limits.infinite */ && !Limits.mate)
 		{
 			Move bookMove = book.probe(rootPos, Options["Book File"], Options["Best Book Move"]);
 			std::vector<Move> ybookMove = ybook.probe_pv(rootPos, false);
+			Score yScore = ybook.probe_score(rootPos);
 
-			if (bookMove && std::count(rootMoves.begin(), rootMoves.end(), bookMove))
-			{
-				std::swap(rootMoves[0], *std::find(rootMoves.begin(), rootMoves.end(), bookMove));
-				//goto finalize;
-			}
-			else if (ybookMove.size() != 0 && std::count(rootMoves.begin(), rootMoves.end(), ybookMove[0]))
+			if (ybookMove.size() > 0 && std::count(rootMoves.begin(), rootMoves.end(), ybookMove[0]))
 			{
 				std::swap(rootMoves[0], *std::find(rootMoves.begin(), rootMoves.end(), ybookMove[0]));
-				rootMoves[0].previousScore = rootMoves[0].score = (Value)ybook.probe_score(rootPos);
 				rootMoves[0].pv.clear();
+				rootMoves[0].previousScore = rootMoves[0].score = (Value)yScore;
 
 				for (int i = 0; i < ybookMove.size(); i++)
 					rootMoves[0].pv.push_back(ybookMove[i]);
+			}
+			else if (bookMove && std::count(rootMoves.begin(), rootMoves.end(), bookMove))
+			{
+				std::swap(rootMoves[0], *std::find(rootMoves.begin(), rootMoves.end(), bookMove));
+			}
 
+			if (bookMove || ybookMove.size() > 0)
+			{
 				sync_cout << UCI::pv(rootPos, ONE_PLY, -VALUE_INFINITE, VALUE_INFINITE) << sync_endl;
 				goto finalize;
 			}
 		}
-
+		
 		for (Thread* th : Threads)
 		{
 			th->maxPly = 0;
@@ -502,7 +505,7 @@ void Thread::search()
 				}
 			}
 
-			if (rootMoves[0].pv.size() >= 3)
+			if (rootMoves[0].pv.size() >= 1)
 				EasyMove.update(rootPos, rootMoves[0].pv);
 			else
 				EasyMove.clear();
@@ -686,6 +689,7 @@ namespace
 		// Step 8. Null move search with verification search (is omitted in PV nodes)
 		if (!PvNode
 			&&  depth >= 2 * ONE_PLY
+			&&  depth <= 8 * ONE_PLY
 			&&  eval >= beta
 			&&  pos.non_pawn_material(pos.side_to_move()))
 		{
@@ -710,7 +714,7 @@ namespace
 				if (nullValue >= VALUE_MATE_IN_MAX_PLY)
 					nullValue = beta;
 				
-				if (depth < 24 * ONE_PLY && abs(beta) < VALUE_KNOWN_WIN)
+				if (depth < 2 * ONE_PLY && abs(beta) < VALUE_KNOWN_WIN)
 					return nullValue;
 
 				// Do verification search at high depths
@@ -906,7 +910,7 @@ namespace
 
 			// Step 15. Reduced depth search (LMR). If the move fails high it will be
 			// re-searched at full depth.
-			if (depth >= 3 * ONE_PLY
+			if (depth >= 2 * ONE_PLY
 				&&  moveCount > 1
 				&& !captureOrPromotion)
 			{

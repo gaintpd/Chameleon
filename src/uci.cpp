@@ -31,13 +31,11 @@
 #include "thread.h"
 #include "timeman.h"
 #include "uci.h"
-#include "book.h"
 
 using namespace std;
 
 // FEN string of the initial position, normal chess
-const char* StartFEN = 
-"rnbakabnr/9/1c5c1/p1p1p1p1p/9/9/P1P1P1P1P/1C5C1/9/RNBAKABNR w";
+const char* StartFEN = "rnbakabnr/9/1c5c1/p1p1p1p1p/9/9/P1P1P1P1P/1C5C1/9/RNBAKABNR w - - 0 1";
 
 // Stack to keep track of the position states along the setup moves (from the
 // start position to the position just before the search starts). Needed by
@@ -112,25 +110,15 @@ void setoption(istringstream& is)
 // the search.
 void go(const Position& pos, istringstream& is)
 {
-	std::string token;
-	Move mv;
-	//std::vector<Move> mvs;
 	Search::LimitsType limits;
-	static YunBook ybook;
+	string token;
 
 	limits.startTime = now(); // As early as possible!
-
-	// What a bad place to insert this code
-	//for (int i = mvs.size() - 1; i >= 0; i--)
-	//mv = ybook.probe(pos);
-	//if (mv != MOVE_NONE)
-	//	limits.searchmoves.push_back(mv);
 
 	while (is >> token)
 		if (token == "searchmoves")
 			while (is >> token)
 				limits.searchmoves.push_back(UCI::to_move(pos, token));
-
 		else if (token == "wtime")     is >> limits.time[WHITE];
 		else if (token == "btime")     is >> limits.time[BLACK];
 		else if (token == "winc")      is >> limits.inc[WHITE];
@@ -159,7 +147,6 @@ void UCI::loop(int argc, char* argv[])
 	for (int i = 1; i < argc; i++)
 		cmd += std::string(argv[i]) + " ";
 
-	std::cout << engine_info() << std::endl;
 	do
 	{
 		if (argc == 1 && !getline(cin, cmd)) // Block here waiting for input or EOF

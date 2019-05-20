@@ -36,8 +36,8 @@ ThreadPool Threads; // Global object
 // in idle_loop().
 Thread::Thread()
 {
-	resetCalls = exit = false;
 	maxPly = callsCnt = 0;
+	resetCalls = exit = false;
 	history.clear();
 	counterMoves.clear();
 	idx = Threads.size(); // Start from 0
@@ -155,10 +155,11 @@ void ThreadPool::start_thinking(const Position& pos, const LimitsType& limits,
 	StateStackPtr& states)
 {
 	main()->wait_for_search_finished();
-	Signals.stopOnPonderhit = Signals.stop = false;
 	main()->rootMoves.clear();
 	main()->rootPos = pos;
 	Limits = limits;
+	Signals.stopOnPonderhit = Signals.stop = false;
+
 	if (states.get()) // If we don't set a new position, preserve current state
 	{
 		SetupStates = std::move(states); // Ownership transfer here

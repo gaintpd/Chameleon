@@ -33,6 +33,7 @@ namespace Eval
 {
 	const Value Tempo = Value(20); // Must be visible to search
 	void init();
+	std::string trace(const Position& pos);
 	template<bool DoTrace = false>
 	Value evaluate(const Position& pos);
 }

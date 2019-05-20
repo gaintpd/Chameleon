@@ -290,7 +290,6 @@ template<PieceType Pt> inline Square Position::square(Color c) const
 template<PieceType Pt>
 inline Bitboard Position::attacks_from(Square s) const
 {
-
 	if (Pt == ROOK)	 return rook_attacks_bb(s, byTypeBB[ALL_PIECES]);
 	else if (Pt == CANNON)	return cannon_attacks_bb(s, byTypeBB[ALL_PIECES]);
 	else if (Pt == KNIGHT)  return knight_leg_attacks_bb(s, byTypeBB[ALL_PIECES]);
