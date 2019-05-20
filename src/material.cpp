@@ -30,7 +30,6 @@
 using namespace std;
 
 // Polynomial material imbalance parameters
-//                      pair  pawn advisor bishop knight cannon  rook 
 const int Linear[7] =
 {
 	/*1667, -168, -168,
@@ -43,13 +42,13 @@ const int QuadraticOurs[][PIECE_TYPE_NB] =
 {
 	//            OUR PIECES
 	// pair pawn advisor bishop knight bishop rook
-		{  0,                                          }, // Bishop pair
-		{  0,   25,                                    }, // Pawn
-		{  0,   -58,  45,    -89,                      }, //Advisor
-		{  0,  -100,  50,                              }, //Bishop
-		{  0,    -45,  -100,     -74,    55,            }, // Knight
-		{  0,    -90,  55,     -5,    -55,     40,      }, // cannon
-		{  0,    10,   30,     -29,     21,    75,    25}, // Rook
+		{  0,                                             }, // Bishop pair
+		{  0,   25,                                       }, // Pawn
+		{  0,   -58,  45,    -89,                         }, // Advisor
+		{  0,  -100,  50,                                 }, // Bishop
+		{  0,    -45,  -100,     -74,    55,              }, // Knight
+		{  0,    -90,  55,     -5,    -55,     40,        }, // Cannon
+		{  0,    10,   30,     -29,     21,    75,    25  }, // Rook
 };
 
 const int QuadraticTheirs[][PIECE_TYPE_NB] =
@@ -61,7 +60,7 @@ const int QuadraticTheirs[][PIECE_TYPE_NB] =
 		{  0,   -61,    24,    -95                        }, // Advisor
 		{  0,   -100,    65                               }, // Bishop 
 		{  0,   80,    10,   10,     -65                  }, // Knight      OUR PIECES
-		{  0,   94,   46,  95,    -93,    32              }, // cannon
+		{  0,   94,   46,  95,    -93,    32              }, // Cannon
 		{  0,   27,   5,   26,     95,    -52,   90       }, // Rook
 };
 
