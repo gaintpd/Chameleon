@@ -87,7 +87,6 @@ extern Bitboard AdvisorCityBB[COLOR_NB];
 extern Bitboard BishopCityBB[COLOR_NB];
 
 extern Bitboard  RookAttackMask[SQUARE_NB];
-
 extern Bitboard  RookMasks[SQUARE_NB];
 extern Bitboard  RookMagics[SQUARE_NB];
 extern Bitboard* RookAttacks[SQUARE_NB];

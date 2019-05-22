@@ -500,17 +500,17 @@ namespace
 			0xDE8BD8ED2632FC8BULL, 0x1756A452AF3AD798ULL, 0x7170D576542A5C97ULL,
 			0x89E3B1536ED4D2D3ULL, 0xF21AE4E8B7656A70ULL, 0xECF5A2D368FE6261ULL,
 			0x224DE1BFED2D174EULL, 0xA33E07AE10C62D4AULL, 0x06102E5F6AF9FA3BULL,
-			0xA8566927E4908AD6ULL, 0x94EE734291472250ULL, 0x74E4D2E9B023016CULL,
-			0xFFEDE299ED558029ULL, 0x73405527C1E93E3DULL, 0x9CA4DB038D7EEB11ULL,
-			0x512FEAA28F347E29ULL, 0xF57F6CD07B9B247CULL, 0x276F9733A9813BC9ULL,
-			0xAD050BB855AC034BULL, 0xF77C5A4F06F2E497ULL, 0x04953DB42F94833CULL,
-			0x2148FD8674194B77ULL, 0xA684CF39FF1D5A41ULL, 0x4131C3246A36063CULL,
-			0x21DCAA82FB3D54F4ULL, 0xCA5AEED84CCC09AEULL, 0x54FB4DB07456C270ULL,
-			0xD12DBBFACBF6BB59ULL, 0xF96AF2F3E1D02B54ULL, 0x70DDF5FFD453E2C7ULL,
-			0x7380F75287996FAEULL, 0x4C4E7FB35319FCABULL, 0x64D6DC20E1A84ACBULL,
-			0x161DB07C22BF2658ULL, 0x1D3584C0610AB3D8ULL, 0xD98F9CFA6E2DADD2ULL,
-			0x366FD8DBEAEB262FULL, 0x8FFA6F0DAEEEF7FBULL, 0xE4AF5DCA9E19758DULL,
-			0xB60F5777A07FD280ULL
+0xA8566927E4908AD6ULL, 0x94EE734291472250ULL, 0x74E4D2E9B023016CULL,
+0xFFEDE299ED558029ULL, 0x73405527C1E93E3DULL, 0x9CA4DB038D7EEB11ULL,
+0x512FEAA28F347E29ULL, 0xF57F6CD07B9B247CULL, 0x276F9733A9813BC9ULL,
+0xAD050BB855AC034BULL, 0xF77C5A4F06F2E497ULL, 0x04953DB42F94833CULL,
+0x2148FD8674194B77ULL, 0xA684CF39FF1D5A41ULL, 0x4131C3246A36063CULL,
+0x21DCAA82FB3D54F4ULL, 0xCA5AEED84CCC09AEULL, 0x54FB4DB07456C270ULL,
+0xD12DBBFACBF6BB59ULL, 0xF96AF2F3E1D02B54ULL, 0x70DDF5FFD453E2C7ULL,
+0x7380F75287996FAEULL, 0x4C4E7FB35319FCABULL, 0x64D6DC20E1A84ACBULL,
+0x161DB07C22BF2658ULL, 0x1D3584C0610AB3D8ULL, 0xD98F9CFA6E2DADD2ULL,
+0x366FD8DBEAEB262FULL, 0x8FFA6F0DAEEEF7FBULL, 0xE4AF5DCA9E19758DULL,
+0xB60F5777A07FD280ULL
 		}
 	};
 
@@ -537,6 +537,7 @@ namespace
 
 } // namespace
 
+// std::string YunBook::buf; // CURL_MAX_WRITE_SIZE
 const std::string YunBook::url = "http://api.chessdb.cn:81/chessdb.php";
 const std::string YunBook::pick[] = { "query", "queryall", "querybest", "queue", "querypv", "queryscore" };
 Depth YunBook::depth = DEPTH_ZERO;
@@ -623,34 +624,35 @@ bool YunBook::query(const Position& pos, const std::string act)
 	args += "action=" + act;
 	args += "&board=" + pos.fen();
 
-	// First set the URL that is about to receive our POST. This URL can
-	// just as well be a http:// URL if that is what should receive the
-	// data
+	/* First set the URL that is about to receive our POST. This URL can
+	just as well be a http:// URL if that is what should receive the
+	data. */
 	curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
 	curl_easy_setopt(curl, CURLOPT_TIMEOUT, 3);
 	curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0);
 	curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 0);
 	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, cb);
 
-	// Now specify the POST data
+	/* Now specify the POST data */
 	curl_easy_setopt(curl, CURLOPT_POSTFIELDS, args.c_str());
 
-	// Perform the request, res will get the return code
+	/* Perform the request, res will get the return code */
 	res = curl_easy_perform(curl);
 
 	curl_easy_cleanup(curl);
 
-	// Returns only the first mv
+	/* Returns only the first mv */
 	return res == CURLE_OK;
 }
 
-size_t YunBook::cb(const char* d, size_t n, size_t l, void* p)
+size_t YunBook::cb(const char *d, size_t n, size_t l, void *p)
 {
+	/* Take care of the data here, ignored in this example */
 	std::vector <std::string> multipv;
 
 	split(d, ",", multipv);
 
-	for (const auto& pv : multipv)
+	for (const auto& pv : multipv) // score:xxx,depth:xxx
 	{
 		std::vector <std::string> params;
 
@@ -671,7 +673,7 @@ size_t YunBook::cb(const char* d, size_t n, size_t l, void* p)
 				moves.clear();
 				moves.push_back(params[1].c_str());
 			}
-			else if (params[0] == "nobestmove")	continue;
+			else if (params[0] == "nobestmove")			continue;//moves.clear();
 			else if (params[0] == "eval")				score = (Score)stoi(params[1]);
 			else if (params[0] == "depth")				depth = (Depth)stoi(params[1]);
 		}
@@ -680,7 +682,7 @@ size_t YunBook::cb(const char* d, size_t n, size_t l, void* p)
 	return n * l;
 }
 
-void YunBook::split(const std::string str, const std::string delim, std::vector<std::string>& ret)
+void YunBook::split(const std::string str, const std::string delim, std::vector<std::string> &ret)
 {
 	size_t last = 0;
 	size_t index = str.find_first_of(delim, last);

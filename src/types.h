@@ -152,7 +152,7 @@ enum Value : int
 	VALUE_MATE_IN_MAX_PLY = VALUE_MATE - 2 * MAX_PLY,
 	VALUE_MATED_IN_MAX_PLY = -VALUE_MATE + 2 * MAX_PLY,
 
-	PieceRatio = 8,
+	PieceRatio = 6,
 	MgLimit = 15581, EgLimit = 3998,
 	PawnValueMg = 12, PawnValueEg = 16,
 	AdvisorValueMg = 18, AdvisorValueEg = 20,

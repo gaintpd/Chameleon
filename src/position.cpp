@@ -389,7 +389,7 @@ Bitboard Position::check_blockers(Color c, Color kingColor) const
 
 	// Pinners are sliders that give check when a pinned piece is removed
 
-	//rook
+	// Rook
 	pinners = pieces(~kingColor, ROOK) & RookAttackMask[ksq];
 	while (pinners)
 	{
@@ -399,7 +399,7 @@ Bitboard Position::check_blockers(Color c, Color kingColor) const
 			result |= b & pieces(c);
 	}
 
-	//cannon
+	// Cannon
 	pinners = pieces(~kingColor, CANNON) & RookAttackMask[ksq];
 	while (pinners)
 	{
@@ -409,7 +409,7 @@ Bitboard Position::check_blockers(Color c, Color kingColor) const
 			result |= b & pieces(c);
 	}
 
-	//knight
+	// Knight
 	pinners = pieces(~kingColor, KNIGHT) & KnightAttackMask[ksq];
 	while (pinners)
 	{
@@ -418,7 +418,7 @@ Bitboard Position::check_blockers(Color c, Color kingColor) const
 		result |= b & pieces(c);
 	}
 
-	//king, face to face
+	// King, face to face
 	pinners = pieces(~kingColor, KING) & RookAttackMask[ksq];
 	while (pinners)
 	{
@@ -439,7 +439,7 @@ Bitboard Position::discovered_check_candidates() const
 	Square ksq = square<KING>(them);
 
 	// Pinners are sliders that give check when a pinned piece is removed
-	//rook
+	// Rook
 	pinners = pieces(us, ROOK) & RookAttackMask[ksq];
 	while (pinners)
 	{
@@ -449,7 +449,7 @@ Bitboard Position::discovered_check_candidates() const
 			result |= b & pieces(us);
 	}
 
-	//cannon
+	// Cannon
 	pinners = pieces(us, CANNON) & RookAttackMask[ksq];
 	while (pinners)
 	{
@@ -459,7 +459,7 @@ Bitboard Position::discovered_check_candidates() const
 			result |= b & pieces(us);
 	}
 
-	//knight
+	// Knight
 	pinners = pieces(us, KNIGHT) & KnightAttackMask[ksq];
 	while (pinners)
 	{
@@ -482,35 +482,29 @@ Bitboard Position::discovered_cannon_check_candidates() const
 	// If there is a situation of cannon and king face to face
 	Bitboard cannons = attacks_from<ROOK>(ksq) & pieces(us, CANNON);
 	while (cannons)
-	{
 		b |= between_bb(ksq, pop_lsb(&cannons));
-	}
 
 	return b;
 }
 
 Bitboard Position::discovered_cannon_face_king() const
 {
-	//them cannon and us king face to face
-	//us move to fibiden area
-
 	Bitboard b;
 	Color us = side_to_move();
 	Color them = ~us;
 	Square ksq = square<KING>(us);
 
-	//我方的cannon与敌方的king face to face的情况
+	// Calculate this case using cannon's method
+	// If there is a situation of cannon and king face to face
 	Bitboard cannons = attacks_from<ROOK>(ksq) & pieces(them, CANNON);
 	while (cannons)
-	{
 		b |= between_bb(ksq, pop_lsb(&cannons));
-	}
 
 	return b;
 }
+
 // Position::attackers_to() computes a bitboard of all pieces which attack a
 // given square. Slider attacks use the occupied bitboard to indicate occupancy.
-
 Bitboard Position::attackers_to(Square s, Bitboard occupied) const
 {
 	return (PawnAttackTo[BLACK][s] & pieces(BLACK, PAWN))
@@ -528,9 +522,6 @@ bool Position::legal(Move m, Bitboard pinned) const
 {
 	assert(is_ok(m));
 	assert(pinned == pinned_pieces(sideToMove));
-	//in search will use this function, must be sure is ok 
-	//return move_is_legal((*this), m);	// ok, but a bit sollow
-#if 1
 	Color us = sideToMove;
 	Square from = from_sq(m);
 	Square to = to_sq(m);
@@ -542,15 +533,10 @@ bool Position::legal(Move m, Bitboard pinned) const
 	// square is attacked by the opponent. Castling moves are checked
 	// for legality during move generation.
 	if (type_of(piece_on(from)) == KING)
-	{
-		//return !(attackers_to(to_sq(m)) & pieces(~us));
 		return move_is_legal((*this), m);
-	}
 
 	if (discovered_cannon_face_king() & to)
-	{
 		return move_is_legal((*this), m);
-	}
 
 	// A non-king move is legal if and only if it is not pinned or it
 	// is moving along the ray towards or away from the king.
@@ -558,7 +544,6 @@ bool Position::legal(Move m, Bitboard pinned) const
 	if (!pinned || !(pinned & from))	return true;
 
 	return move_is_legal((*this), m);
-#endif
 }
 
 // Position::pseudo_legal() takes a random move and tests whether the move is
@@ -633,7 +618,7 @@ bool Position::gives_check(Move m, const CheckInfo& ci) const
 		return true;
 	else if (ci.dcCannonCandidates && (ci.dcCannonCandidates & to))
 		return true;
-	else if (pt == CANNON && /*RookAttackMask[from] & */RookAttackMask[to] & ci.ksq)
+	else if (pt == CANNON && RookAttackMask[to] & ci.ksq)
 		return true;
 	// This function simply determines that check may occur,
 	// which is not very accurate. If it is accurate, the cost will be high
@@ -682,9 +667,7 @@ void Position::do_move(Move m, StateInfo& newSt, bool givesCheck)
 		// If the captured piece is a pawn, update pawn hash key, otherwise
 		// update non-pawn material.
 		if (captured == PAWN)
-		{
 			st->pawnKey ^= Zobrist::psq[them][PAWN][capsq];
-		}
 		else
 			st->nonPawnMaterial[them] -= PieceValue[MG][captured];
 
@@ -710,14 +693,8 @@ void Position::do_move(Move m, StateInfo& newSt, bool givesCheck)
 
 	// If the moving piece is a pawn do some special extra work
 	if (pt == PAWN)
-	{
 		// Update pawn hash key and prefetch access to pawnsTable
 		st->pawnKey ^= Zobrist::psq[us][PAWN][from] ^ Zobrist::psq[us][PAWN][to];
-		//prefetch(thisThread->pawnsTable[st->pawnKey]);
-
-		// Reset rule 50 draw counter
-		//st->rule50 = 0;
-	}
 
 	// Update incremental scores
 	st->psq += PSQT::psq[us][pt][to] - PSQT::psq[us][pt][from];
@@ -784,11 +761,7 @@ void Position::undo_move(Move m)
 	move_piece(us, pt, to, from); // Put the piece back at the source square
 
 	if (st->capturedType)
-	{
-		Square capsq = to;
-
-		put_piece(~us, st->capturedType, capsq); // Restore the captured piece
-	}
+		put_piece(~us, st->capturedType, to); // Restore the captured piece
 
 	// Finally point our state pointer back to the previous state
 	st = st->previous;

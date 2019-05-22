@@ -45,7 +45,7 @@ public:
 private:
 	bool query(const Position& pos, const std::string act);
 	static size_t cb(const char *d, size_t n, size_t l, void *p);
-	static void split(const std::string str, const std::string delim, std::vector<std::string>& ret);
+	static void split(const std::string str, const std::string delim, std::vector<std::string> &ret);
 
 	CURL *curl;
 	CURLcode res;
