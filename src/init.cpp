@@ -74,7 +74,6 @@ Bitboard FileBB[FILE_NB];
 Bitboard RankBB[RANK_NB];
 Bitboard AdjacentFilesBB[FILE_NB];
 Bitboard InFrontBB[COLOR_NB][RANK_NB];
-// Bitboard StepAttacksBB[PIECE_NB][SQUARE_NB];
 Bitboard BetweenBB[SQUARE_NB][SQUARE_NB];
 Bitboard LineBB[SQUARE_NB][SQUARE_NB];
 Bitboard DistanceRingBB[SQUARE_NB][8];
@@ -168,7 +167,6 @@ namespace
 		}
 		return attack;
 	}
-
 	Bitboard supercannon_sliding_control(Square deltas[], Square sq, const Bitboard& occupied)
 	{
 		Bitboard attack(0, 0);
@@ -222,6 +220,7 @@ namespace
 
 	Bitboard knight_attack_to(Square sq, const Bitboard& eye)
 	{
+
 		Bitboard attack;
 
 		Square KnightEyeDeltas[4] = { DELTA_NW, DELTA_NE, DELTA_SE, DELTA_SW };
@@ -277,6 +276,7 @@ namespace
 // to be printed to standard output. Useful for debugging.
 const std::string Bitboards::pretty(Bitboard b)
 {
+
 	std::string s;
 
 	int shift[90] =
@@ -313,6 +313,7 @@ const std::string Bitboards::pretty(Bitboard b)
 // startup and relies on global objects to be already zero-initialized.
 void Bitboards::init()
 {
+
 	for (int k = 0, i = 0; i < 8; ++i)
 		while (k < (2 << i))
 			MSBTable[k++] = i;
@@ -370,7 +371,11 @@ void Bitboards::init()
 		for (Square s = SQ_A0; s <= SQ_I9; ++s)
 		{
 			ForwardBB[c][s] = InFrontBB[c][rank_of(s)] & FileBB[file_of(s)];
+			// PawnAttackSpan[c][s] = InFrontBB[c][rank_of(s)] & AdjacentFilesBB[file_of(s)];
+			// PassedPawnMask[c][s] = ForwardBB[c][s] | PawnAttackSpan[c][s];
+
 			PawnAttackSpan[c][s] = (InFrontBB[c][rank_of(s)] | RankBB[rank_of(s)]) & PawnMask[c];  //?
+
 			PassedPawnMask[c][s] = (InFrontBB[c][rank_of(s)] | RankBB[rank_of(s)]) & PassedRiverBB[c];//?
 		}
 	}
@@ -417,7 +422,7 @@ void Bitboards::init()
 	}
 
 	Square KnightEyeDeltas[4] = { DELTA_NW, DELTA_NE, DELTA_SE, DELTA_SW };
-
+	// Square KnightStepFrom[4][2] = { { DELTA_WWN,DELTA_NNW },{ DELTA_NNE,DELTA_EEN },{ DELTA_EES,DELTA_SSE },{ DELTA_SSW, DELTA_WWS } };
 	for (Square s = SQ_A0; s <= SQ_I9; ++s)
 	{
 		for (int i = 0; i < 4; ++i)
@@ -429,7 +434,7 @@ void Bitboards::init()
 	}
 
 	Square BishopEyeDeltas[4] = { DELTA_NW, DELTA_NE, DELTA_SE, DELTA_SW };
-
+	// Square BishopStepDeltas[4] = { DELTA_NNWW, DELTA_NNEE, DELTA_SSEE, DELTA_SSWW };
 	for (Square s = SQ_A0; s <= SQ_I9; ++s)
 	{
 		BishopEye[s] = Bitboard();
@@ -442,7 +447,6 @@ void Bitboards::init()
 	}
 
 	Square AdvisorDetas[4] = { DELTA_NW, DELTA_NE, DELTA_SE, DELTA_SW };
-
 	for (Square s = SQ_A0; s <= SQ_I9; ++s)
 	{
 		AdvisorAttack[s] = Bitboard();
@@ -455,7 +459,6 @@ void Bitboards::init()
 	}
 
 	Square PawnDetas[COLOR_NB][3] = { { DELTA_N,DELTA_W, DELTA_E },{ DELTA_S,DELTA_E,DELTA_W } };
-
 	for (Color c = WHITE; c < COLOR_NB; ++c)
 	{
 		for (Square s = SQ_A0; s <= SQ_I9; ++s)
@@ -486,7 +489,6 @@ void Bitboards::init()
 	}
 
 	Square KingDetas[4] = { DELTA_N, DELTA_E, DELTA_S,DELTA_W };
-
 	for (Square s = SQ_A0; s <= SQ_I9; ++s)
 	{
 		KingAttack[s] = Bitboard();
@@ -512,6 +514,7 @@ void Bitboards::init()
 			}
 		}
 	}
+
 
 	init_slider_magics(RookTable, RookAttacks, RookMagics, RookMasks, RookShifts, RDeltas, slider_magic_index<ROOK>, sliding_attack, RookMagicsData, RookShiftsData);
 	init_slider_magics(CannonTable, CannonAttacks, CannonMagics, CannonMasks, CannonShifts, RDeltas, slider_magic_index<CANNON>, cannon_sliding_control, CannonMagicsData, CannonShiftsData);
@@ -567,7 +570,7 @@ namespace
 			if (s < SQ_I9)
 				attacks[s + 1] = attacks[s] + size;
 			if (shifts[s] != datashifts[s])
-				printf("SQ%d shift error\n", s);
+				printf("sq%d shift error\n", s);
 			do
 			{
 				magics[s] = magicsdata[s];
@@ -630,6 +633,7 @@ namespace
 
 	void init_bishop_magics(uint64_t magicsdata[])
 	{
+
 		Bitboard occupancy[1 << 4], reference[1 << 4], b;
 		int i, size;
 

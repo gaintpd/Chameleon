@@ -499,6 +499,7 @@ ExtMove* generate<QUIET_CHECKS>(const Position& pos, ExtMove* moveList)
 	return moveList;
 }
 
+
 // generate<EVASIONS> generates all pseudo-legal check evasions when the side
 // to move is in check. Returns a pointer to the end of the move list.
 template<>

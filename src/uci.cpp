@@ -104,6 +104,7 @@ void setoption(istringstream& is)
 	else
 		sync_cout << "No such option: " << name << sync_endl;
 }
+#include "book.h"
 
 // go() is called when engine receives the "go" UCI command. The function sets
 // the thinking time and other parameters from the input string, then starts

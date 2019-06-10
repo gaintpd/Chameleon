@@ -20,8 +20,6 @@
   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 
-#include <condition_variable>
-#include <mutex>
 #include <fstream>
 #include <iomanip>
 #include <iostream>
@@ -29,6 +27,7 @@
 #include <Windows.h>
 
 #include "misc.h"
+#include "thread_win32.h"
 
 using namespace std;
 
@@ -127,7 +126,7 @@ public:
 // the same time.
 std::ostream& operator<<(std::ostream& os, SyncCout sc)
 {
-	static std::mutex m;
+	static Mutex m;
 
 	if (sc == IO_LOCK)
 		m.lock();

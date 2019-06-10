@@ -42,7 +42,7 @@ Thread::Thread()
 	counterMoves.clear();
 	idx = Threads.size(); // Start from 0
 
-	std::unique_lock<std::mutex> lk(mutex);
+	std::unique_lock<Mutex> lk(mutex);
 	searching = true;
 	nativeThread = std::thread(&Thread::idle_loop, this);
 	sleepCondition.wait(lk, [&] { return !searching; });
@@ -61,21 +61,21 @@ Thread::~Thread()
 // Thread::wait_for_search_finished() wait on sleep condition until not searching
 void Thread::wait_for_search_finished()
 {
-	std::unique_lock<std::mutex> lk(mutex);
+	std::unique_lock<Mutex> lk(mutex);
 	sleepCondition.wait(lk, [&] { return !searching; });
 }
 
 // Thread::wait() wait on sleep condition until condition is true
 void Thread::wait(std::atomic_bool& condition)
 {
-	std::unique_lock<std::mutex> lk(mutex);
+	std::unique_lock<Mutex> lk(mutex);
 	sleepCondition.wait(lk, [&] { return bool(condition); });
 }
 
 // Thread::start_searching() wake up the thread that will start the search
 void Thread::start_searching(bool resume)
 {
-	std::unique_lock<std::mutex> lk(mutex);
+	std::unique_lock<Mutex> lk(mutex);
 
 	if (!resume)
 		searching = true;
@@ -88,7 +88,7 @@ void Thread::idle_loop()
 {
 	while (!exit)
 	{
-		std::unique_lock<std::mutex> lk(mutex);
+		std::unique_lock<Mutex> lk(mutex);
 
 		searching = false;
 

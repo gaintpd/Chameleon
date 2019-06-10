@@ -35,6 +35,7 @@
 #include "pawns.h"
 #include "position.h"
 #include "search.h"
+#include "thread_win32.h"
 
 // Thread struct keeps together all the thread related stuff. We also use
 // per-thread pawn and material hash tables so that once we get a pointer to an
@@ -43,8 +44,8 @@
 class Thread
 {
 	std::thread nativeThread;
-	std::mutex mutex;
-	std::condition_variable sleepCondition;
+	Mutex mutex;
+	ConditionVariable sleepCondition;
 	bool exit, searching;
 
 public:

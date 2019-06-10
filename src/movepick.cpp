@@ -64,6 +64,7 @@ Move pick_best(ExtMove* begin, ExtMove* end)
 // moves to return (in the quiescence search, for instance, we only want to
 // search captures, promotions and some checks) and how important good move
 // ordering is at the current node.
+
 MovePicker::MovePicker(const Position& p, Move ttm, Depth d, const HistoryStats& h,
 	const CounterMovesStats& cmh, Move cm, Search::Stack* s)
 	: pos(p), history(h), counterMovesHistory(&cmh), ss(s), countermove(cm), depth(d)
@@ -168,6 +169,7 @@ void MovePicker::score<EVASIONS>()
 
 // generate_next_stage() generates, scores and sorts the next bunch of moves,
 // when there are no more moves to try for the current stage.
+
 void MovePicker::generate_next_stage()
 {
 	assert(stage != STOP);

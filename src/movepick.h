@@ -77,6 +77,7 @@ typedef Stats<CounterMovesStats> CounterMovesHistoryStats;
 // when MOVE_NONE is returned. In order to improve the efficiency of the alpha
 // beta algorithm, MovePicker attempts to return the moves which are most likely
 // to get a cut-off first.
+
 class MovePicker
 {
 public:

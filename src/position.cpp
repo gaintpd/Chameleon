@@ -35,7 +35,6 @@
 #include "position.h"
 #include "thread.h"
 #include "tt.h"
-//#include "uci.h"
 
 using std::string;
 
@@ -48,8 +47,8 @@ namespace Zobrist
 
 Value PieceValue[PHASE_NB][PIECE_NB] =
 {
-	{ VALUE_ZERO, PawnValueMg * (int)PieceRatio, AdvisorValueMg * (int)PieceRatio, BishopValueMg * (int)PieceRatio, KnightValueMg * (int)PieceRatio, CannonValueMg * (int)PieceRatio, RookValueMg * (int)PieceRatio },
-	{ VALUE_ZERO, PawnValueEg * (int)PieceRatio, AdvisorValueEg * (int)PieceRatio, BishopValueEg * (int)PieceRatio, KnightValueEg * (int)PieceRatio, CannonValueEg * (int)PieceRatio, RookValueEg * (int)PieceRatio }
+	{ VALUE_ZERO, PawnValueMg, AdvisorValueMg, BishopValueMg, KnightValueMg, CannonValueMg, RookValueMg },
+	{ VALUE_ZERO, PawnValueEg, AdvisorValueEg, BishopValueEg, KnightValueEg, CannonValueEg, RookValueEg }
 };
 
 static const string PieceToChar(" PABNCRK pabncrk");
@@ -389,7 +388,6 @@ Bitboard Position::check_blockers(Color c, Color kingColor) const
 
 	// Pinners are sliders that give check when a pinned piece is removed
 
-	// Rook
 	pinners = pieces(~kingColor, ROOK) & RookAttackMask[ksq];
 	while (pinners)
 	{
@@ -399,7 +397,6 @@ Bitboard Position::check_blockers(Color c, Color kingColor) const
 			result |= b & pieces(c);
 	}
 
-	// Cannon
 	pinners = pieces(~kingColor, CANNON) & RookAttackMask[ksq];
 	while (pinners)
 	{
@@ -409,7 +406,6 @@ Bitboard Position::check_blockers(Color c, Color kingColor) const
 			result |= b & pieces(c);
 	}
 
-	// Knight
 	pinners = pieces(~kingColor, KNIGHT) & KnightAttackMask[ksq];
 	while (pinners)
 	{
@@ -418,7 +414,6 @@ Bitboard Position::check_blockers(Color c, Color kingColor) const
 		result |= b & pieces(c);
 	}
 
-	// King, face to face
 	pinners = pieces(~kingColor, KING) & RookAttackMask[ksq];
 	while (pinners)
 	{
@@ -439,7 +434,6 @@ Bitboard Position::discovered_check_candidates() const
 	Square ksq = square<KING>(them);
 
 	// Pinners are sliders that give check when a pinned piece is removed
-	// Rook
 	pinners = pieces(us, ROOK) & RookAttackMask[ksq];
 	while (pinners)
 	{
@@ -449,7 +443,6 @@ Bitboard Position::discovered_check_candidates() const
 			result |= b & pieces(us);
 	}
 
-	// Cannon
 	pinners = pieces(us, CANNON) & RookAttackMask[ksq];
 	while (pinners)
 	{
@@ -459,7 +452,6 @@ Bitboard Position::discovered_check_candidates() const
 			result |= b & pieces(us);
 	}
 
-	// Knight
 	pinners = pieces(us, KNIGHT) & KnightAttackMask[ksq];
 	while (pinners)
 	{
@@ -482,7 +474,9 @@ Bitboard Position::discovered_cannon_check_candidates() const
 	// If there is a situation of cannon and king face to face
 	Bitboard cannons = attacks_from<ROOK>(ksq) & pieces(us, CANNON);
 	while (cannons)
+	{
 		b |= between_bb(ksq, pop_lsb(&cannons));
+	}
 
 	return b;
 }
@@ -494,11 +488,11 @@ Bitboard Position::discovered_cannon_face_king() const
 	Color them = ~us;
 	Square ksq = square<KING>(us);
 
-	// Calculate this case using cannon's method
-	// If there is a situation of cannon and king face to face
 	Bitboard cannons = attacks_from<ROOK>(ksq) & pieces(them, CANNON);
 	while (cannons)
+	{
 		b |= between_bb(ksq, pop_lsb(&cannons));
+	}
 
 	return b;
 }
@@ -522,6 +516,8 @@ bool Position::legal(Move m, Bitboard pinned) const
 {
 	assert(is_ok(m));
 	assert(pinned == pinned_pieces(sideToMove));
+	return move_is_legal((*this), m);	// Ok, but a bit sollow
+#if 0
 	Color us = sideToMove;
 	Square from = from_sq(m);
 	Square to = to_sq(m);
@@ -533,10 +529,15 @@ bool Position::legal(Move m, Bitboard pinned) const
 	// square is attacked by the opponent. Castling moves are checked
 	// for legality during move generation.
 	if (type_of(piece_on(from)) == KING)
+	{
+		//return !(attackers_to(to_sq(m)) & pieces(~us));
 		return move_is_legal((*this), m);
+	}
 
 	if (discovered_cannon_face_king() & to)
+	{
 		return move_is_legal((*this), m);
+	}
 
 	// A non-king move is legal if and only if it is not pinned or it
 	// is moving along the ray towards or away from the king.
@@ -544,6 +545,7 @@ bool Position::legal(Move m, Bitboard pinned) const
 	if (!pinned || !(pinned & from))	return true;
 
 	return move_is_legal((*this), m);
+#endif
 }
 
 // Position::pseudo_legal() takes a random move and tests whether the move is
@@ -618,7 +620,7 @@ bool Position::gives_check(Move m, const CheckInfo& ci) const
 		return true;
 	else if (ci.dcCannonCandidates && (ci.dcCannonCandidates & to))
 		return true;
-	else if (pt == CANNON && RookAttackMask[to] & ci.ksq)
+	else if (pt == CANNON && /*RookAttackMask[from] & */RookAttackMask[to] & ci.ksq)
 		return true;
 	// This function simply determines that check may occur,
 	// which is not very accurate. If it is accurate, the cost will be high
@@ -667,7 +669,9 @@ void Position::do_move(Move m, StateInfo& newSt, bool givesCheck)
 		// If the captured piece is a pawn, update pawn hash key, otherwise
 		// update non-pawn material.
 		if (captured == PAWN)
+		{
 			st->pawnKey ^= Zobrist::psq[them][PAWN][capsq];
+		}
 		else
 			st->nonPawnMaterial[them] -= PieceValue[MG][captured];
 
@@ -693,8 +697,14 @@ void Position::do_move(Move m, StateInfo& newSt, bool givesCheck)
 
 	// If the moving piece is a pawn do some special extra work
 	if (pt == PAWN)
+	{
 		// Update pawn hash key and prefetch access to pawnsTable
 		st->pawnKey ^= Zobrist::psq[us][PAWN][from] ^ Zobrist::psq[us][PAWN][to];
+		// prefetch(thisThread->pawnsTable[st->pawnKey]);
+
+		// Reset rule 50 draw counter
+		// st->rule50 = 0;
+	}
 
 	// Update incremental scores
 	st->psq += PSQT::psq[us][pt][to] - PSQT::psq[us][pt][from];
@@ -706,7 +716,7 @@ void Position::do_move(Move m, StateInfo& newSt, bool givesCheck)
 	st->key = k;
 
 	// Calculate checkers bitboard (if move gives check)
-	st->checkersBB = get_checkers(us, square<KING>(them));//givesCheck ? get_checkers(us, square<KING>(them)) : Bitboard(); // 
+	st->checkersBB = get_checkers(us, square<KING>(them));
 
 	sideToMove = ~sideToMove;
 
@@ -761,7 +771,11 @@ void Position::undo_move(Move m)
 	move_piece(us, pt, to, from); // Put the piece back at the source square
 
 	if (st->capturedType)
-		put_piece(~us, st->capturedType, to); // Restore the captured piece
+	{
+		Square capsq = to;
+
+		put_piece(~us, st->capturedType, capsq); // Restore the captured piece
+	}
 
 	// Finally point our state pointer back to the previous state
 	st = st->previous;
