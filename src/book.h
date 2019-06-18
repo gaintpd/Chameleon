@@ -53,7 +53,6 @@ private:
 	CURL *curl;
 	CURLcode res;
 
-	// Yunbook address
 	const static std::string url;
 	const static std::string pick[];
 	static Depth depth;

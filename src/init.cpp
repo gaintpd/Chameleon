@@ -120,8 +120,9 @@ namespace
 
 	void init_bishop_magics(uint64_t magicsdata[]);
 
-	// bsf_index() returns the index into BSFTable[] to look up the bitscan. Uses
-	// Matt Taylor's folding for 32 bit case, extended to 64 bit by Kim Walisch.
+	/// bsf_index() returns the index into BSFTable[] to look up the bitscan. Uses
+	/// Matt Taylor's folding for 32 bit case, extended to 64 bit by Kim Walisch.
+
 	unsigned bsf_index(Bitboard b)
 	{
 		if (b.bb[0] > 0)
@@ -167,6 +168,7 @@ namespace
 		}
 		return attack;
 	}
+
 	Bitboard supercannon_sliding_control(Square deltas[], Square sq, const Bitboard& occupied)
 	{
 		Bitboard attack(0, 0);
@@ -220,7 +222,6 @@ namespace
 
 	Bitboard knight_attack_to(Square sq, const Bitboard& eye)
 	{
-
 		Bitboard attack;
 
 		Square KnightEyeDeltas[4] = { DELTA_NW, DELTA_NE, DELTA_SE, DELTA_SW };
@@ -272,11 +273,11 @@ namespace
 	}
 }
 
-// Bitboards::pretty() returns an ASCII representation of a bitboard suitable
-// to be printed to standard output. Useful for debugging.
+/// Bitboards::pretty() returns an ASCII representation of a bitboard suitable
+/// to be printed to standard output. Useful for debugging.
+
 const std::string Bitboards::pretty(Bitboard b)
 {
-
 	std::string s;
 
 	int shift[90] =
@@ -292,9 +293,10 @@ const std::string Bitboards::pretty(Bitboard b)
 			9,  10, 11, 12, 13, 14, 15, 16, 17,
 			0,  1,  2,  3,  4,  5,  6,  7,  8,
 	};
-	Bitboard one(0x1, 0);
+
 	for (int i = 0; i < 90; ++i)
 	{
+		Bitboard one(0x1, 0);
 		Bitboard t = one << shift[i];
 
 		if ((t&(b))) s += "1";
@@ -309,11 +311,11 @@ const std::string Bitboards::pretty(Bitboard b)
 	return s;
 }
 
-// Bitboards::init() initializes various bitboard tables. It is called at
-// startup and relies on global objects to be already zero-initialized.
+/// Bitboards::init() initializes various bitboard tables. It is called at
+/// startup and relies on global objects to be already zero-initialized.
+
 void Bitboards::init()
 {
-
 	for (int k = 0, i = 0; i < 8; ++i)
 		while (k < (2 << i))
 			MSBTable[k++] = i;

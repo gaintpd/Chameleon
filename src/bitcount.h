@@ -33,7 +33,8 @@ enum BitCountType
 	CNT_HW_POPCNT
 };
 
-// popcount() counts the number of non-zero bits in a bitboard
+/// popcount() counts the number of non-zero bits in a bitboard
+
 template<BitCountType> inline int popcount(uint64_t);
 
 template<>

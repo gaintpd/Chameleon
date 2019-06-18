@@ -20,8 +20,9 @@
   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 
-#ifndef BITBOARD_H
-#define BITBOARD_H
+#ifndef BITBOARD_H_INCLUDED
+#define BITBOARD_H_INCLUDED
+
 #include <cstdint>
 #include <cstdio>
 
@@ -52,4 +53,4 @@ public:
 	static const uint64_t BIT_MASK = 0x1FFFFFFFFFFF;
 };
 
-#endif
+#endif // #ifndef BITBOARD_H_INCLUDED

@@ -72,8 +72,8 @@ bool verify_material(const Position& pos, Color c, Value npm, int pawnsCnt)
 }
 #endif
 
-// Map the square as if strongSide is white and strongSide's only pawn
-// is on the left half of the board.
+/// normalize() map the square as if strongSide is white and strongSide's only pawn
+/// is on the left half of the board.
 Square normalize(const Position& pos, Color strongSide, Square sq)
 {
 	assert(pos.count<PAWN>(strongSide) == 1);
@@ -87,9 +87,10 @@ Square normalize(const Position& pos, Color strongSide, Square sq)
 	return sq;
 }
 
-// Get the material key of Position out of the given endgame key code
-// like "KBPKN". The trick here is to first forge an ad-hoc FEN string
-// and then let a Position object do the work for us.
+/// key() get the material key of Position out of the given endgame key code
+/// like "KBPKN". The trick here is to first forge an ad-hoc FEN string
+/// and then let a Position object do the work for us.
+
 uint64_t key(const string& code, Color c)
 {
 	assert(code.length() > 0 && code.length() < 8);

@@ -514,7 +514,8 @@ namespace
 		}
 	};
 
-	// polyglot_key() returns the PolyGlot hash key of the given position
+	/// polyglot_key() returns the PolyGlot hash key of the given position
+
 	uint64_t polyglot_key(const Position& pos)
 	{
 		uint64_t key = 0;
@@ -538,16 +539,16 @@ namespace
 } // namespace
 
 #if 0
-// std::string YunBook::buf; // CURL_MAX_WRITE_SIZE
 const std::string YunBook::url = "http://api.chessdb.cn:81/chessdb.php";
 const std::string YunBook::pick[] = { "query", "queryall", "querybest", "queue", "querypv", "queryscore" };
 Depth YunBook::depth = DEPTH_ZERO;
 Score YunBook::score = SCORE_ZERO;
 std::vector<std::string> YunBook::moves;
 
-// probe() tries to find a book move for the given position. If no move is
-// found returns MOVE_NONE. If pickBest is true returns always the highest
-// rated move, otherwise randomly chooses one, based on the move score.
+/// probe() tries to find a book move for the given position. If no move is
+/// found returns MOVE_NONE. If pickBest is true returns always the highest
+/// rated move, otherwise randomly chooses one, based on the move score.
+
 Move YunBook::probe(const Position& pos)
 {
 	std::vector<Move> pv = probe_pv(pos, true);
@@ -625,35 +626,34 @@ bool YunBook::query(const Position& pos, const std::string act)
 	args += "action=" + act;
 	args += "&board=" + pos.fen();
 
-	/* First set the URL that is about to receive our POST. This URL can
-	just as well be a http:// URL if that is what should receive the
-	data. */
+	// First set the URL that is about to receive our POST. This URL can
+	// just as well be a http:// URL if that is what should receive the
+	// data.
 	curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
 	curl_easy_setopt(curl, CURLOPT_TIMEOUT, 3);
 	curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0);
 	curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 0);
 	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, cb);
 
-	/* Now specify the POST data */
+	// Now specify the POST data
 	curl_easy_setopt(curl, CURLOPT_POSTFIELDS, args.c_str());
 
-	/* Perform the request, res will get the return code */
+	// Perform the request, res will get the return code
 	res = curl_easy_perform(curl);
 
 	curl_easy_cleanup(curl);
 
-	/* Returns only the first mv */
+	// Returns only the first mv
 	return res == CURLE_OK;
 }
 
 size_t YunBook::cb(const char *d, size_t n, size_t l, void *p)
 {
-	/* Take care of the data here, ignored in this example */
 	std::vector <std::string> multipv;
 
 	split(d, ",", multipv);
 
-	for (const auto& pv : multipv) // score:xxx,depth:xxx
+	for (const auto& pv : multipv)
 	{
 		std::vector <std::string> params;
 
@@ -700,10 +700,13 @@ void YunBook::split(const std::string str, const std::string delim, std::vector<
 		ret.push_back(str.substr(last, index - last));
 	}
 }
+
 #endif
-// operator>>() reads sizeof(T) chars from the file's binary byte stream and
-// converts them in a number of type T. A Polyglot book stores numbers in
-// big-endian format.
+
+/// operator>>() reads sizeof(T) chars from the file's binary byte stream and
+/// converts them in a number of type T. A Polyglot book stores numbers in
+/// big-endian format.
+
 template<typename T> PolyglotBook& PolyglotBook::operator>>(T& n)
 {
 	n = 0;
@@ -718,8 +721,9 @@ template<> PolyglotBook& PolyglotBook::operator>>(Entry& e)
 	return *this >> e.key >> e.move >> e.count >> e.learn;
 }
 
-// open() tries to open a book file with the given name after closing any
-// exsisting one.
+/// open() tries to open a book file with the given name after closing any
+/// exsisting one.
+
 bool PolyglotBook::open(const char* fName)
 {
 	if (is_open()) // Cannot close an already closed file
@@ -733,9 +737,10 @@ bool PolyglotBook::open(const char* fName)
 	return !fileName.empty();
 }
 
-// probe() tries to find a book move for the given position. If no move is
-// found returns MOVE_NONE. If pickBest is true returns always the highest
-// rated move, otherwise randomly chooses one, based on the move score.
+/// probe() tries to find a book move for the given position. If no move is
+/// found returns MOVE_NONE. If pickBest is true returns always the highest
+/// rated move, otherwise randomly chooses one, based on the move score.
+
 Move PolyglotBook::probe(const Position& pos, const string& fName, bool pickBest)
 {
 	if (fileName != fName && !open(fName.c_str()))
@@ -773,9 +778,10 @@ Move PolyglotBook::probe(const Position& pos, const string& fName, bool pickBest
 	return MOVE_NONE;
 }
 
-// find_first() takes a book key as input, and does a binary search through
-// the book file for the given key. Returns the index of the leftmost book
-// entry with the same key as the input.
+/// find_first() takes a book key as input, and does a binary search through
+/// the book file for the given key. Returns the index of the leftmost book
+/// entry with the same key as the input.
+
 size_t PolyglotBook::find_first(uint64_t key)
 {
 	seekg(0, ios::end); // Move pointer to end, so tellg() gets file's size

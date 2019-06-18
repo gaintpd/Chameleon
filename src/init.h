@@ -20,8 +20,8 @@
   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 
-#ifndef BITBOARD_H_INCLUDED
-#define BITBOARD_H_INCLUDED
+#ifndef INIT_H_INCLUDED
+#define INIT_H_INCLUDED
 
 #include <string>
 
@@ -138,7 +138,6 @@ extern Bitboard PassedPawnMask[COLOR_NB][SQUARE_NB];
 extern Bitboard PawnAttackSpan[COLOR_NB][SQUARE_NB];
 // extern Bitboard PseudoAttacks[PIECE_TYPE_NB][SQUARE_NB];
 
-
 // Overloads of bitwise operators between a Bitboard and a Square for testing
 // whether a given bit is set in a bitboard, and for setting and clearing bits.
 inline Bitboard operator&(const Bitboard& b, Square s)
@@ -176,8 +175,8 @@ inline bool more_than_one(const Bitboard& b)
 	return b.more_than_one();
 }
 
-// rank_bb() and file_bb() return a bitboard representing all the squares on
-// the given file or rank.
+/// rank_bb() and file_bb() return a bitboard representing all the squares on
+/// the given file or rank.
 
 inline Bitboard rank_bb(Rank r)
 {
@@ -199,7 +198,8 @@ inline Bitboard file_bb(Square s)
 	return FileBB[file_of(s)];
 }
 
-// shift_bb() moves a bitboard one step along direction Delta. Mainly for pawns
+/// shift_bb() moves a bitboard one step along direction Delta. Mainly for pawns
+
 inline Bitboard shift_bb(Bitboard b, Square Delta)
 {
 	return Delta == DELTA_N ? b << 9 : Delta == DELTA_S ? b >> 9
@@ -207,57 +207,64 @@ inline Bitboard shift_bb(Bitboard b, Square Delta)
 		: Bitboard();
 }
 
-// adjacent_files_bb() returns a bitboard representing all the squares on the
-// adjacent files of the given one.
+/// adjacent_files_bb() returns a bitboard representing all the squares on the
+/// adjacent files of the given one.
+
 inline Bitboard adjacent_files_bb(File f)
 {
 	return AdjacentFilesBB[f];
 }
 
-// between_bb() returns a bitboard representing all the squares between the two
-// given ones. For instance, between_bb(SQ_C4, SQ_F7) returns a bitboard with
-// the bits for square d5 and e6 set. If s1 and s2 are not on the same rank, file
-// or diagonal, 0 is returned.
+/// between_bb() returns a bitboard representing all the squares between the two
+/// given ones. For instance, between_bb(SQ_C4, SQ_F7) returns a bitboard with
+/// the bits for square d5 and e6 set. If s1 and s2 are not on the same rank, file
+/// or diagonal, 0 is returned.
+
 inline Bitboard between_bb(Square s1, Square s2)
 {
 	return BetweenBB[s1][s2];
 }
 
-// in_front_bb() returns a bitboard representing all the squares on all the ranks
-// in front of the given one, from the point of view of the given color. For
-// instance, in_front_bb(BLACK, RANK_3) will return the squares on ranks 1 and 2.
+/// in_front_bb() returns a bitboard representing all the squares on all the ranks
+/// in front of the given one, from the point of view of the given color. For
+/// instance, in_front_bb(BLACK, RANK_3) will return the squares on ranks 1 and 2.
+
 inline Bitboard in_front_bb(Color c, Rank r)
 {
 	return InFrontBB[c][r];
 }
 
-// forward_bb() returns a bitboard representing all the squares along the line
-// in front of the given one, from the point of view of the given color:
-//        ForwardBB[c][s] = in_front_bb(c, s) & file_bb(s)
+/// forward_bb() returns a bitboard representing all the squares along the line
+/// in front of the given one, from the point of view of the given color:
+///        ForwardBB[c][s] = in_front_bb(c, s) & file_bb(s)
+
 inline Bitboard forward_bb(Color c, Square s)
 {
 	return ForwardBB[c][s];
 }
 
-// pawn_attack_span() returns a bitboard representing all the squares that can be
-// attacked by a pawn of the given color when it moves along its file, starting
-// from the given square:
-// PawnAttackSpan[c][s] = in_front_bb(c, s) & adjacent_files_bb(s);
+/// pawn_attack_span() returns a bitboard representing all the squares that can be
+/// attacked by a pawn of the given color when it moves along its file, starting
+/// from the given square:
+/// PawnAttackSpan[c][s] = in_front_bb(c, s) & adjacent_files_bb(s);
+
 inline Bitboard pawn_attack_span(Color c, Square s)
 {
 	return PawnAttackSpan[c][s];
 }
 
-// passed_pawn_mask() returns a bitboard mask which can be used to test if a
-// pawn of the given color and on the given square is a passed pawn:
-// PassedPawnMask[c][s] = pawn_attack_span(c, s) | forward_bb(c, s)
+/// passed_pawn_mask() returns a bitboard mask which can be used to test if a
+/// pawn of the given color and on the given square is a passed pawn:
+/// PassedPawnMask[c][s] = pawn_attack_span(c, s) | forward_bb(c, s)
+
 inline Bitboard passed_pawn_mask(Color c, Square s)
 {
 	return PassedPawnMask[c][s];
 }
 
-// aligned() returns true if the squares s1, s2 and s3 are aligned either on a
-// straight or on a diagonal line.
+/// aligned() returns true if the squares s1, s2 and s3 are aligned either on a
+/// straight or on a diagonal line.
+
 inline bool aligned(Square s1, Square s2, Square s3)
 {
 	return LineBB[s1][s2] & s3;
@@ -282,8 +289,9 @@ inline bool advisor_in_city(Square sq)
 {
 	return AdvisorCityBB[square_color(sq)] & sq;
 }
-// distance() functions return the distance between x and y, defined as the
-// number of steps for a king in x to reach y. Works with squares, ranks, files.
+
+/// distance() functions return the distance between x and y, defined as the
+/// number of steps for a king in x to reach y. Works with squares, ranks, files.
 
 template<typename T> inline int distance(T x, T y) { return x < y ? y - x : x - y; }
 template<> inline int distance<Square>(Square x, Square y) { return SquareDistance[x][y]; }
@@ -293,9 +301,10 @@ template<> inline int distance<File>(Square x, Square y) { return distance(file_
 template<> inline int distance<Rank>(Square x, Square y) { return distance(rank_of(x), rank_of(y)); }
 
 
-// attacks_bb() returns a bitboard representing all the squares attacked by a
-// piece of type Pt (bishop or rook) placed on 's'. The helper magic_index()
-// looks up the index using the 'magic bitboards' approach.
+/// attacks_bb() returns a bitboard representing all the squares attacked by a
+/// piece of type Pt (bishop or rook) placed on 's'. The helper magic_index()
+/// looks up the index using the 'magic bitboards' approach.
+
 template<PieceType Pt>
 inline unsigned slider_magic_index(Square s, const Bitboard& occ)
 {
@@ -366,7 +375,7 @@ inline Bitboard attacks_bb(Piece pc, Square s, const Bitboard& occupied)
 	}
 }
 
-// lsb() and msb() return the least/most significant bit in a non-zero bitboard
+/// lsb() and msb() return the least/most significant bit in a non-zero bitboard
 #  if defined(_MSC_VER) && !defined(__INTEL_COMPILER)
 
 inline Square lsb(uint64_t b)
@@ -376,6 +385,7 @@ inline Square lsb(uint64_t b)
 	_BitScanForward64(&idx, b);
 	return (Square)idx;
 }
+
 inline Square lsb(Bitboard b)
 {
 	unsigned long idx;
@@ -388,6 +398,7 @@ inline Square lsb(Bitboard b)
 	}
 	return (Square)idx;
 }
+
 inline Square msb(uint64_t b)
 {
 	unsigned long idx;
@@ -395,6 +406,7 @@ inline Square msb(uint64_t b)
 	_BitScanReverse64(&idx, b);
 	return (Square)idx;
 }
+
 inline Square msb(Bitboard b)
 {
 	unsigned long idx;
@@ -447,7 +459,8 @@ inline Square msb(Bitboard b)
 
 #endif
 
-// pop_lsb() finds and clears the least significant bit in a non-zero bitboard
+/// pop_lsb() finds and clears the least significant bit in a non-zero bitboard
+
 inline Square pop_lsb(Bitboard* b)
 {
 	const Square s = lsb(*b);
@@ -455,9 +468,10 @@ inline Square pop_lsb(Bitboard* b)
 	return s;
 }
 
-// frontmost_sq() and backmost_sq() return the square corresponding to the
-// most/least advanced bit relative to the given color.
+/// frontmost_sq() and backmost_sq() return the square corresponding to the
+/// most/least advanced bit relative to the given color.
+
 inline Square frontmost_sq(Color c, Bitboard b) { return c == WHITE ? msb(b) : lsb(b); }
 inline Square  backmost_sq(Color c, Bitboard b) { return c == WHITE ? lsb(b) : msb(b); }
 
-#endif // #ifndef BITBOARD_H_INCLUDED
+#endif // #ifndef INIT_H_INCLUDED
