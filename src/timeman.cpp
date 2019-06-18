@@ -36,10 +36,11 @@ const int MoveHorizon = 50;   // Plan time management at most this many moves ah
 const double MaxRatio = 6.93;  // When in trouble, we can step over reserved time with this ratio
 const double StealRatio = 0.36; // However we must not steal time from remaining moves over this ratio
 
-// move_importance() is a skew-logistic function based on naive statistical
-// analysis of "how many games are still undecided after n half-moves". Game
-// is considered "undecided" as long as neither side has >275cp advantage.
-// Data was extracted from CCRL game database with some simple filtering criteria.
+/// move_importance() is a skew-logistic function based on naive statistical
+/// analysis of "how many games are still undecided after n half-moves". Game
+/// is considered "undecided" as long as neither side has >275cp advantage.
+/// Data was extracted from CCRL game database with some simple filtering criteria.
+
 double move_importance(int ply)
 {
 	const double XScale = 8.27;
@@ -67,14 +68,15 @@ int remaining(int myTime, int movesToGo, int ply, int slowMover)
 	return int(myTime * std::min(ratio1, ratio2)); // Intel C++ asks an explicit cast
 }
 
-// init() is called at the beginning of the search and calculates the allowed
-// thinking time out of the time control and current game ply. We support four
-// different kinds of time controls, passed in 'limits':
-//
-//  inc == 0 && movestogo == 0 means: x basetime  [sudden death!]
-//  inc == 0 && movestogo != 0 means: x moves in y minutes
-//  inc >  0 && movestogo == 0 means: x basetime + z increment
-//  inc >  0 && movestogo != 0 means: x moves in y minutes + z increment
+/// init() is called at the beginning of the search and calculates the allowed
+/// thinking time out of the time control and current game ply. We support four
+/// different kinds of time controls, passed in 'limits':
+///
+///  inc == 0 && movestogo == 0 means: x basetime  [sudden death!]
+///  inc == 0 && movestogo != 0 means: x moves in y minutes
+///  inc >  0 && movestogo == 0 means: x basetime + z increment
+///  inc >  0 && movestogo != 0 means: x moves in y minutes + z increment
+
 void TimeManagement::init(Search::LimitsType& limits, Color us, int ply)
 {
 	int minThinkingTime = Options["Minimum Thinking Time"];

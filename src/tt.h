@@ -52,7 +52,6 @@ struct TTEntry
 		// Don't overwrite more valuable entries
 		if ((k >> 48) != key16
 			|| d > depth8 - 2
-			/* || g != (genBound8 & 0xFC) // Matching non-zero keys are already refreshed by probe() */
 			|| b == BOUND_EXACT)
 		{
 			key16 = (uint16_t)(k >> 48);
@@ -103,7 +102,8 @@ public:
 	void resize(size_t mbSize);
 	void clear();
 
-	// The lowest order bits of the key are used to get the index of the cluster
+	/// first_entry() the lowest order bits of the key are
+	/// used to get the index of the cluster.
 	TTEntry* first_entry(const uint64_t key) const
 	{
 		return &table[(size_t)key & (clusterCount - 1)].entry[0];

@@ -58,8 +58,9 @@ const int QuadraticTheirs[][PIECE_TYPE_NB] =
 		{  0,   27,   5,   26,     95,    -52,   90       }, // Rook
 };
 
-// imbalance() calculates the imbalance by comparing the piece count of each
-// piece type for both colors.
+/// imbalance() calculates the imbalance by comparing the piece count of each
+/// piece type for both colors.
+
 template<Color Us>
 int imbalance(const int pieceCount[][PIECE_TYPE_NB])
 {
@@ -86,10 +87,11 @@ int imbalance(const int pieceCount[][PIECE_TYPE_NB])
 
 namespace Material
 {
-	// Material::probe() looks up the current position's material configuration in
-	// the material hash table. It returns a pointer to the Entry if the position
-	// is found. Otherwise a new Entry is computed and stored there, so we don't
-	// have to recompute all when the same material configuration occurs again.
+	/// Material::probe() looks up the current position's material configuration in
+	/// the material hash table. It returns a pointer to the Entry if the position
+	/// is found. Otherwise a new Entry is computed and stored there, so we don't
+	/// have to recompute all when the same material configuration occurs again.
+
 	Entry* probe(const Position& pos)
 	{
 		uint64_t key = pos.material_key();

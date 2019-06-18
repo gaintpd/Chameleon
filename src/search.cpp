@@ -149,6 +149,7 @@ namespace {
 } // namespace
 
 /// Search::init() is called during startup to initialize various lookup tables
+
 void Search::init() {
 
 	const double K[][2] = { { 0.799, 2.281 }, { 0.484, 3.023 } };
@@ -176,6 +177,7 @@ void Search::init() {
 }
 
 /// Search::clear() resets to zero search state, to obtain reproducible results
+
 void Search::clear() {
 
 	TT.clear();
@@ -190,6 +192,7 @@ void Search::clear() {
 
 /// Search::perft() is our utility to verify move generation. All the leaf nodes
 /// up to the given depth are generated and counted and the sum returned.
+
 template<bool Root>
 uint64_t Search::perft(Position& pos, Depth depth) {
 
@@ -220,6 +223,7 @@ template uint64_t Search::perft<true>(Position&, Depth);
 /// MainThread::search() is called by the main thread when the program receives
 /// the UCI 'go' command. It searches from root position and at the end prints
 /// the "bestmove" to output.
+
 void MainThread::search() {
 	Color us = rootPos.side_to_move();
 	Time.init(Limits, us, rootPos.game_ply());
@@ -377,9 +381,10 @@ finalize:
 }
 
 
-// Thread::search() is the main iterative deepening loop. It calls search()
-// repeatedly with increasing depth until the allocated thinking time has been
-// consumed, user stops the search, or the maximum search depth is reached.
+/// Thread::search() is the main iterative deepening loop. It calls search()
+/// repeatedly with increasing depth until the allocated thinking time has been
+/// consumed, user stops the search, or the maximum search depth is reached.
+
 void Thread::search() {
 
 	Stack stack[MAX_PLY + 4], *ss = stack + 2; // To allow referencing (ss-2) and (ss+2)
@@ -529,7 +534,7 @@ void Thread::search() {
 				sync_cout << "info nodes " << Threads.nodes_searched()
 				<< " time " << Time.elapsed() << sync_endl;
 
-			else if (PVIdx + 1 == multiPV || Time.elapsed() > 3000)
+			else if ((PVIdx + 1 == multiPV || Time.elapsed() > 3000) && rootMoves[0].previousScore != rootMoves[0].score)
 				sync_cout << UCI::pv(rootPos, rootDepth, alpha, beta) << sync_endl;
 		}
 
@@ -597,10 +602,10 @@ void Thread::search() {
 			rootMoves.end(), skill.best_move(multiPV)));
 }
 
-
 namespace {
 
-	// search<>() is the main search function for both PV and non-PV nodes
+	/// search<>() is the main search function for both PV and non-PV nodes
+
 	template <NodeType NT>
 	Value search(Position& pos, Stack* ss, Value alpha, Value beta, Depth depth, bool cutNode) {
 
@@ -622,7 +627,7 @@ namespace {
 		bool captureOrPromotion, doFullDepthSearch;
 		int moveCount, quietCount;
 
-		// Step 1. Initialize node
+		// Step 0. Initialize node
 		Thread* thisThread = pos.this_thread();
 		inCheck = pos.checkers();
 		assert(pos.checkers() == pos.get_checkers(~pos.side_to_move(), pos.square<KING>(pos.side_to_move())));
@@ -631,6 +636,7 @@ namespace {
 		bestValue = -VALUE_INFINITE;
 		ss->ply = (ss - 1)->ply + 1;
 		assert(!pos.in_check(~pos.side_to_move()));
+
 		// Check for available remaining time
 		if (thisThread->resetCalls.load(std::memory_order_relaxed))
 		{
@@ -651,11 +657,11 @@ namespace {
 
 		if (!RootNode)
 		{
-			//check repeat check
+			// Step 1. Check repeat check
 			int rep = pos.is_repeat();
-			if (rep != REPEATE_NONE) {
+
+			if (rep != REPEATE_NONE)
 				return repeat_value(ss->ply, rep);
-			}
 
 			// Step 2. Check for aborted search and immediate draw
 			if (Signals.stop.load(std::memory_order_relaxed) || pos.is_draw() || ss->ply >= MAX_PLY)
@@ -788,14 +794,14 @@ namespace {
 		if (!RootNode
 			&&  depth < 7 * ONE_PLY
 			&&  eval - futility_margin(depth) >= beta
-			&& eval < VALUE_KNOWN_WIN  // Do not return unproven wins
+			&&  eval < VALUE_KNOWN_WIN  // Do not return unproven wins
 			&&  pos.non_pawn_material(pos.side_to_move()))
 			return eval - futility_margin(depth);
 
 		// Step 8. Null move search with verification search (is omitted in PV nodes)
 		if (!PvNode
 			&&  depth >= 2 * ONE_PLY
-			&&  depth <= 24 * ONE_PLY
+			&&  depth <= 16 * ONE_PLY
 			&&  eval >= beta
 			&& pos.non_pawn_material(pos.side_to_move()))
 		{
@@ -820,7 +826,7 @@ namespace {
 				if (nullValue >= VALUE_MATE_IN_MAX_PLY)
 					nullValue = beta;
 
-				if (depth < 2 * ONE_PLY && abs(beta) < VALUE_KNOWN_WIN)
+				if (depth < 6/* + Time.elapsed() / 8000*/ * ONE_PLY && abs(beta) < VALUE_KNOWN_WIN)
 					return nullValue;
 
 				// Do verification search at high depths
@@ -865,13 +871,13 @@ namespace {
 		}
 
 		// Step 10. Internal iterative deepening (skipped when in check)
-		if (depth >= (PvNode ? 5 * ONE_PLY : 8 * ONE_PLY)
+		if (depth >= (PvNode ? 2 * ONE_PLY : 8 * ONE_PLY)
 			&& !ttMove
 			&& (PvNode || ss->staticEval + 256 >= beta))
 		{
-			Depth d = depth - 2 * ONE_PLY - (PvNode ? DEPTH_ZERO : depth / 4);
+			Depth d = depth - 2 * ONE_PLY - (PvNode ? DEPTH_ZERO : depth / 2);
 			ss->skipEarlyPruning = true;
-			search<PvNode ? PV : NonPV>(pos, ss, alpha, beta, d, true);
+			value = -search<PvNode ? PV : NonPV>(pos, ss, alpha, beta, d, true);
 			ss->skipEarlyPruning = false;
 
 			tte = TT.probe(posKey, ttHit);
@@ -894,7 +900,6 @@ namespace {
 		singularExtensionNode = !RootNode
 			&&  depth >= 8 * ONE_PLY
 			&&  ttMove != MOVE_NONE
-			/*  &&  ttValue != VALUE_NONE Already implicit in the next condition */
 			&& abs(ttValue) < VALUE_KNOWN_WIN
 			&& !excludedMove // Recursive singular search is not allowed
 			&& (tte->bound() & BOUND_LOWER)
@@ -929,9 +934,6 @@ namespace {
 			extension = DEPTH_ZERO;
 			captureOrPromotion = pos.capture(move);
 
-			//givesCheck =  type_of(move) == NORMAL && !ci.dcCandidates
-			//            ? ci.checkSquares[type_of(pos.piece_on(from_sq(move)))] & to_sq(move)
-			//            : pos.gives_check(move, ci);
 			givesCheck = move_is_check(pos, move);
 
 			// Step 12. Extend checks
@@ -1013,13 +1015,14 @@ namespace {
 
 			ss->currentMove = move;
 			assert(pos.checkers() == pos.in_check(pos.side_to_move()));
+
 			// Step 14. Make the move
 			pos.do_move(move, st, givesCheck);
 			assert(pos.checkers() == pos.in_check(pos.side_to_move()));
 
 			// Step 15. Reduced depth search (LMR). If the move fails high it will be
 			// re-searched at full depth.
-			if (depth >= 3 * ONE_PLY
+			if (depth >= 2 * ONE_PLY
 				&&  moveCount > 1
 				&& !captureOrPromotion)
 			{
@@ -1149,18 +1152,14 @@ namespace {
 		// Following condition would detect a stop only after move loop has been
 		// completed. But in this case bestValue is valid because we have fully
 		// searched our subtree, and we can anyhow save the result in TT.
-		/*
-		   if (Signals.stop)
+		
+		if (Signals.stop)
 			return VALUE_DRAW;
-		*/
 
 		// Step 20. Check for mate and stalemate
 		// All legal moves have been searched and if there are no legal moves, it
 		// must be mate or stalemate. If we are in a singular extension search then
 		// return a fail low score.
-		//if (!moveCount)
-		//	bestValue = excludedMove ? alpha
-		//	: inCheck ? mated_in(ss->ply) : DrawValue[pos.side_to_move()];
 		if (!moveCount)
 			bestValue = excludedMove ? alpha : mated_in(ss->ply);
 
@@ -1193,9 +1192,10 @@ namespace {
 	}
 
 
-	// qsearch() is the quiescence search function, which is called by the main
-	// search function when the remaining depth is zero (or, to be more precise,
-	// less than ONE_PLY).
+	/// qsearch() is the quiescence search function, which is called by the main
+	/// search function when the remaining depth is zero (or, to be more precise,
+	/// less than ONE_PLY).
+
 	template <NodeType NT, bool InCheck>
 	Value qsearch(Position& pos, Stack* ss, Value alpha, Value beta, Depth depth) {
 
@@ -1229,9 +1229,9 @@ namespace {
 
 		// Check repeat check
 		int rep = pos.is_repeat();
-		if (rep != REPEATE_NONE) {
+
+		if (rep != REPEATE_NONE)
 			return repeat_value(ss->ply, rep);
-		}
 
 		// Check for an instant draw or if the maximum ply has been reached
 		if (pos.is_draw() || ss->ply >= MAX_PLY)
@@ -1315,9 +1315,6 @@ namespace {
 		{
 			assert(is_ok(move));
 
-			//givesCheck =  type_of(move) == NORMAL && !ci.dcCandidates
-			//            ? ci.checkSquares[type_of(pos.piece_on(from_sq(move)))] & to_sq(move)
-			//            : pos.gives_check(move, ci);
 			givesCheck = move_is_check(pos, move);
 
 			// Futility pruning
@@ -1326,8 +1323,6 @@ namespace {
 				&&  futilityBase > -VALUE_KNOWN_WIN
 				&& !pos.advanced_pawn_push(move))
 			{
-				//assert(type_of(move) != ENPASSANT); // Due to !pos.advanced_pawn_push
-
 				futilityValue = futilityBase + PieceValue[EG][pos.piece_on(to_sq(move))];
 
 				if (futilityValue <= alpha)
@@ -1411,9 +1406,10 @@ namespace {
 		return bestValue;
 	}
 
-	// value_to_tt() adjusts a mate score from "plies to mate from the root" to
-	// "plies to mate from the current position". Non-mate scores are unchanged.
-	// The function is called before storing a value in the transposition table.
+	/// value_to_tt() adjusts a mate score from "plies to mate from the root" to
+	/// "plies to mate from the current position". Non-mate scores are unchanged.
+	/// The function is called before storing a value in the transposition table.
+
 	Value value_to_tt(Value v, int ply) {
 
 		assert(v != VALUE_NONE);
@@ -1422,9 +1418,10 @@ namespace {
 			: v <= VALUE_MATED_IN_MAX_PLY ? v - ply : v;
 	}
 
-	// value_from_tt() is the inverse of value_to_tt(): It adjusts a mate score
-	// from the transposition table (which refers to the plies to mate/be mated
-	// from current position) to "plies to mate/be mated from the root".
+	/// value_from_tt() is the inverse of value_to_tt(): It adjusts a mate score
+	/// from the transposition table (which refers to the plies to mate/be mated
+	/// from current position) to "plies to mate/be mated from the root".
+
 	Value value_from_tt(Value v, int ply) {
 
 		return  v == VALUE_NONE ? VALUE_NONE
@@ -1432,7 +1429,8 @@ namespace {
 			: v <= VALUE_MATED_IN_MAX_PLY ? v + ply : v;
 	}
 
-	// update_pv() adds current move and appends child pv[]
+	/// update_pv() adds current move and appends child pv[]
+
 	void update_pv(Move* pv, Move move, Move* childPv) {
 
 		for (*pv++ = move; childPv && *childPv != MOVE_NONE; )
@@ -1440,8 +1438,9 @@ namespace {
 		*pv = MOVE_NONE;
 	}
 
-	// update_stats() updates killers, history, countermove and countermove
-	// history when a new quiet best move is found.
+	/// update_stats() updates killers, history, countermove and countermove
+	/// history when a new quiet best move is found.
+
 	void update_stats(const Position& pos, Stack* ss, Move move,
 		Depth depth, Move* quiets, int quietsCnt) {
 
@@ -1485,8 +1484,8 @@ namespace {
 		}
 	}
 
-	// When playing with strength handicap, choose best move among a set of RootMoves
-	// using a statistical rule dependent on 'level'. Idea by Heinz van Saanen.
+	/// Skill::pick_best() when playing with strength handicap, choose best move among a set of RootMoves
+	/// using a statistical rule dependent on 'level'. Idea by Heinz van Saanen.
 	Move Skill::pick_best(size_t multiPV) {
 
 		const Search::RootMoveVector& rootMoves = Threads.main()->rootMoves;
@@ -1517,8 +1516,9 @@ namespace {
 		return best;
 	}
 
-	// check_time() is used to print debug info and, more importantly, to detect
-	// when we are out of available time and thus stop the search.
+	/// check_time() is used to print debug info and, more importantly, to detect
+	/// when we are out of available time and thus stop the search.
+
 	void check_time() {
 
 		static TimePoint lastInfoTime = now();
@@ -1546,10 +1546,10 @@ namespace {
 
 /// UCI::pv() formats PV information according to the UCI protocol. UCI requires
 /// that all (if any) unsearched PV lines are sent using a previous search score.
+
 string UCI::pv(const Position& pos, Depth depth, Value alpha, Value beta) {
 
 	std::stringstream ss;
-	int elapsed = Time.elapsed() + 1;
 	const Search::RootMoveVector& rootMoves = pos.this_thread()->rootMoves;
 	size_t PVIdx = pos.this_thread()->PVIdx;
 	size_t multiPV = std::min((size_t)Options["Multi PV"], rootMoves.size());
@@ -1558,9 +1558,10 @@ string UCI::pv(const Position& pos, Depth depth, Value alpha, Value beta) {
 	for (size_t i = 0; i < multiPV; ++i)
 	{
 		bool updated = (i <= PVIdx);
+		int elapsed = Time.elapsed() + 1;
 
 		if (depth == ONE_PLY && !updated)
-			continue;
+			break;
 
 		Depth d = updated ? depth : depth - ONE_PLY;
 		Value v = updated ? rootMoves[i].score : rootMoves[i].previousScore;
@@ -1600,6 +1601,7 @@ string UCI::pv(const Position& pos, Depth depth, Value alpha, Value beta) {
 /// RootMove::insert_pv_in_tt() is called at the end of a search iteration, and
 /// inserts the PV back into the TT. This makes sure the old PV moves are searched
 /// first, even if the old TT entries have been overwritten.
+
 void RootMove::insert_pv_in_tt(Position& pos) {
 
 	StateInfo state[MAX_PLY], *st = state;
@@ -1626,6 +1628,7 @@ void RootMove::insert_pv_in_tt(Position& pos) {
 /// before exiting the search, for instance in case we stop the search during a
 /// fail high at root. We try hard to have a ponder move to return to the GUI,
 /// otherwise in case of 'ponder on' we have nothing to think on.
+
 bool RootMove::extract_ponder_from_tt(Position& pos)
 {
 	StateInfo st;

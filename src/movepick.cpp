@@ -50,20 +50,21 @@ void insertion_sort(ExtMove* begin, ExtMove* end)
 	}
 }
 
-// pick_best() finds the best move in the range (begin, end) and moves it to
-// the front. It's faster than sorting all the moves in advance when there
-// are few moves e.g. the possible captures.
+/// pick_best() finds the best move in the range (begin, end) and moves it to
+/// the front. It's faster than sorting all the moves in advance when there
+/// are few moves e.g. the possible captures.
+
 Move pick_best(ExtMove* begin, ExtMove* end)
 {
 	std::swap(*begin, *std::max_element(begin, end));
 	return *begin;
 }
 
-// Constructors of the MovePicker class. As arguments we pass information
-// to help it to return the (presumably) good moves first, to decide which
-// moves to return (in the quiescence search, for instance, we only want to
-// search captures, promotions and some checks) and how important good move
-// ordering is at the current node.
+/// MovePicker constructor as arguments we pass information
+/// to help it to return the (presumably) good moves first, to decide which
+/// moves to return (in the quiescence search, for instance, we only want to
+/// search captures, promotions and some checks) and how important good move
+/// ordering is at the current node.
 
 MovePicker::MovePicker(const Position& p, Move ttm, Depth d, const HistoryStats& h,
 	const CounterMovesStats& cmh, Move cm, Search::Stack* s)
@@ -118,8 +119,9 @@ MovePicker::MovePicker(const Position& p, Move ttm, const HistoryStats& h, Value
 	endMoves += (ttMove != MOVE_NONE);
 }
 
-// score() assigns a numerical value to each move in a move list. The moves with
-// highest values will be picked first.
+/// score() assigns a numerical value to each move in a move list. The moves with
+/// highest values will be picked first.
+
 template<>
 void MovePicker::score<CAPTURES>()
 {
@@ -167,8 +169,8 @@ void MovePicker::score<EVASIONS>()
 			m.value = history[pos.moved_piece(m)][to_sq(m)];
 }
 
-// generate_next_stage() generates, scores and sorts the next bunch of moves,
-// when there are no more moves to try for the current stage.
+/// generate_next_stage() generates, scores and sorts the next bunch of moves,
+/// when there are no more moves to try for the current stage.
 
 void MovePicker::generate_next_stage()
 {
@@ -224,10 +226,11 @@ void MovePicker::generate_next_stage()
 	}
 }
 
-// next_move() is the most important method of the MovePicker class. It returns
-// a new pseudo legal move every time it is called, until there are no more moves
-// left. It picks the move with the biggest value from a list of generated moves
-// taking care not to return the ttMove if it has already been searched.
+/// next_move() is the most important method of the MovePicker class. It returns
+/// a new pseudo legal move every time it is called, until there are no more moves
+/// left. It picks the move with the biggest value from a list of generated moves
+/// taking care not to return the ttMove if it has already been searched.
+
 Move MovePicker::next_move()
 {
 	Move move;

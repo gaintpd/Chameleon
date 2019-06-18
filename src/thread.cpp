@@ -32,8 +32,9 @@ using namespace Search;
 
 ThreadPool Threads; // Global object
 
-// Thread constructor launch the thread and then wait until it goes to sleep
-// in idle_loop().
+/// Thread constructor launch the thread and then wait until it goes to sleep
+/// in idle_loop().
+
 Thread::Thread()
 {
 	maxPly = callsCnt = 0;
@@ -42,13 +43,14 @@ Thread::Thread()
 	counterMoves.clear();
 	idx = Threads.size(); // Start from 0
 
-	std::unique_lock<Mutex> lk(mutex);
+	std::unique_lock<std::mutex> lk(mutex);
 	searching = true;
 	nativeThread = std::thread(&Thread::idle_loop, this);
 	sleepCondition.wait(lk, [&] { return !searching; });
 }
 
-// Thread destructor wait for thread termination before returning
+/// Thread destructor wait for thread termination before returning.
+
 Thread::~Thread()
 {
 	mutex.lock();
@@ -58,24 +60,27 @@ Thread::~Thread()
 	nativeThread.join();
 }
 
-// Thread::wait_for_search_finished() wait on sleep condition until not searching
+/// Thread::wait_for_search_finished() wait on sleep condition until not searching.
+
 void Thread::wait_for_search_finished()
 {
-	std::unique_lock<Mutex> lk(mutex);
+	std::unique_lock<std::mutex> lk(mutex);
 	sleepCondition.wait(lk, [&] { return !searching; });
 }
 
-// Thread::wait() wait on sleep condition until condition is true
+/// Thread::wait() wait on sleep condition until condition is true.
+
 void Thread::wait(std::atomic_bool& condition)
 {
-	std::unique_lock<Mutex> lk(mutex);
+	std::unique_lock<std::mutex> lk(mutex);
 	sleepCondition.wait(lk, [&] { return bool(condition); });
 }
 
-// Thread::start_searching() wake up the thread that will start the search
+/// Thread::start_searching() wake up the thread that will start the search.
+
 void Thread::start_searching(bool resume)
 {
-	std::unique_lock<Mutex> lk(mutex);
+	std::unique_lock<std::mutex> lk(mutex);
 
 	if (!resume)
 		searching = true;
@@ -83,12 +88,13 @@ void Thread::start_searching(bool resume)
 	sleepCondition.notify_one();
 }
 
-// Thread::idle_loop() is where the thread is parked when it has no work to do
+/// Thread::idle_loop() is where the thread is parked when it has no work to do.
+
 void Thread::idle_loop()
 {
 	while (!exit)
 	{
-		std::unique_lock<Mutex> lk(mutex);
+		std::unique_lock<std::mutex> lk(mutex);
 
 		searching = false;
 
@@ -105,28 +111,31 @@ void Thread::idle_loop()
 	}
 }
 
-// ThreadPool::init() create and launch requested threads, that will go
-// immediately to sleep. We cannot use a constructor because Threads is a
-// static object and we need a fully initialized engine at this point due to
-// allocation of Endgames in the Thread constructor.
+/// ThreadPool::init() create and launch requested threads, that will go
+/// immediately to sleep. We cannot use a constructor because Threads is a
+/// static object and we need a fully initialized engine at this point due to
+/// allocation of Endgames in the Thread constructor.
+
 void ThreadPool::init()
 {
 	push_back(new MainThread);
 	read_uci_options();
 }
 
-// ThreadPool::exit() terminate threads before the program exits. Cannot be
-// done in destructor because threads must be terminated before deleting any
-// static objects, so while still in main().
+/// ThreadPool::exit() terminate threads before the program exits. Cannot be
+/// done in destructor because threads must be terminated before deleting any
+/// static objects, so while still in main().
+
 void ThreadPool::exit()
 {
 	while (size())
 		delete back(), pop_back();
 }
 
-// ThreadPool::read_uci_options() updates internal threads parameters from the
-// corresponding UCI options and creates/destroys threads to match requested
-// number. Thread objects are dynamically allocated.
+/// ThreadPool::read_uci_options() updates internal threads parameters from the
+/// corresponding UCI options and creates/destroys threads to match requested
+/// number. Thread objects are dynamically allocated.
+
 void ThreadPool::read_uci_options()
 {
 	size_t requested = Options["Threads"];
@@ -140,7 +149,8 @@ void ThreadPool::read_uci_options()
 		delete back(), pop_back();
 }
 
-// ThreadPool::nodes_searched() return the number of nodes searched
+/// ThreadPool::nodes_searched() return the number of nodes searched.
+
 int64_t ThreadPool::nodes_searched()
 {
 	int64_t nodes = 0;
@@ -149,8 +159,9 @@ int64_t ThreadPool::nodes_searched()
 	return nodes;
 }
 
-// ThreadPool::start_thinking() wake up the main thread sleeping in idle_loop()
-// and start a new search, then return immediately.
+/// ThreadPool::start_thinking() wake up the main thread sleeping in idle_loop()
+/// and start a new search, then return immediately.
+
 void ThreadPool::start_thinking(const Position& pos, const LimitsType& limits,
 	StateStackPtr& states)
 {

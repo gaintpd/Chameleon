@@ -383,10 +383,8 @@ ExtMove* generate_moves(const Position& pos, ExtMove* moveList,
 
 	for (Square from = *pl; from != SQ_NONE; from = *++pl)
 	{
-
 		if (from == exclued)	continue;
 
-		//rook cannon knight advisor bishop
 		if (Pt == ROOK)
 		{
 			Bitboard att = pos.attacks_from<ROOK>(from)&target;
@@ -442,14 +440,15 @@ ExtMove* generate_all(const Position& pos, ExtMove* moveList,
 	return moveList;
 }
 
-// generate<CAPTURES> generates all pseudo-legal captures
-// promotions. Returns a pointer to the end of the move list.
-//
-// generate<QUIETS> generates all pseudo-legal non-captures and
-// underpromotions. Returns a pointer to the end of the move list.
-//
-// generate<NON_EVASIONS> generates all pseudo-legal captures and
-// non-captures. Returns a pointer to the end of the move list.
+/// generate<CAPTURES> generates all pseudo-legal captures
+/// promotions. Returns a pointer to the end of the move list.
+///
+/// generate<QUIETS> generates all pseudo-legal non-captures and
+/// underpromotions. Returns a pointer to the end of the move list.
+///
+/// generate<NON_EVASIONS> generates all pseudo-legal captures and
+/// non-captures. Returns a pointer to the end of the move list.
+
 template<GenType Type>
 ExtMove* generate(const Position& pos, ExtMove* moveList)
 {
@@ -471,8 +470,9 @@ template ExtMove* generate<CAPTURES>(const Position&, ExtMove*);
 template ExtMove* generate<QUIETS>(const Position&, ExtMove*);
 template ExtMove* generate<NON_EVASIONS>(const Position&, ExtMove*);
 
-// generate<QUIET_CHECKS> generates all pseudo-legal non-captures and knight
-// underpromotions that give check. Returns a pointer to the end of the move list.
+/// generate<QUIET_CHECKS> generates all pseudo-legal non-captures and knight
+/// underpromotions that give check. Returns a pointer to the end of the move list.
+
 template<>
 ExtMove* generate<QUIET_CHECKS>(const Position& pos, ExtMove* moveList)
 {
@@ -500,8 +500,9 @@ ExtMove* generate<QUIET_CHECKS>(const Position& pos, ExtMove* moveList)
 }
 
 
-// generate<EVASIONS> generates all pseudo-legal check evasions when the side
-// to move is in check. Returns a pointer to the end of the move list.
+/// generate<EVASIONS> generates all pseudo-legal check evasions when the side
+/// to move is in check. Returns a pointer to the end of the move list.
+
 template<>
 ExtMove* generate<EVASIONS>(const Position& pos, ExtMove* moveList)
 {
@@ -647,7 +648,8 @@ ExtMove* generate<EVASIONS>(const Position& pos, ExtMove* moveList)
 	}
 }
 
-// generate<LEGAL> generates all the legal moves in the given position
+/// generate<LEGAL> generates all the legal moves in the given position
+
 template<>
 ExtMove* generate<LEGAL>(const Position& pos, ExtMove* moveList)
 {

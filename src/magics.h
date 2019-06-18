@@ -203,4 +203,5 @@ uint64_t BishopLegMagicsData[90] =
 	0,     0,     0,     0x8080816100021100, 0,
 	0,     0,     0x100800044ac20, 0,     0,
 };
+
 #endif

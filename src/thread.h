@@ -35,7 +35,6 @@
 #include "pawns.h"
 #include "position.h"
 #include "search.h"
-#include "thread_win32.h"
 
 // Thread struct keeps together all the thread related stuff. We also use
 // per-thread pawn and material hash tables so that once we get a pointer to an
@@ -44,8 +43,8 @@
 class Thread
 {
 	std::thread nativeThread;
-	Mutex mutex;
-	ConditionVariable sleepCondition;
+	std::mutex mutex;
+	std::condition_variable sleepCondition;
 	bool exit, searching;
 
 public:
@@ -75,7 +74,7 @@ public:
 // MainThread is a derived class with a specific overload for the main thread
 struct MainThread : public Thread
 {
-	virtual void search();
+	void search();
 
 	bool easyMovePlayed, failedLow;
 	double bestMoveChanges;

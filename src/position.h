@@ -430,7 +430,6 @@ inline void Position::remove_piece(Color c, PieceType pt, Square s)
 	byTypeBB[ALL_PIECES] ^= s;
 	byTypeBB[pt] ^= s;
 	byColorBB[c] ^= s;
-	/* board[s] = NO_PIECE;  Not needed, overwritten by the capturing one */
 	Square lastSquare = pieceList[c][pt][--pieceCount[c][pt]];
 	index[lastSquare] = index[s];
 	pieceList[c][pt][index[lastSquare]] = lastSquare;

@@ -53,9 +53,10 @@ Value PieceValue[PHASE_NB][PIECE_NB] =
 
 static const string PieceToChar(" PABNCRK pabncrk");
 
-// min_attacker() is a helper function used by see() to locate the least
-// valuable attacker for the side to move, remove the attacker we just found
-// from the bitboards and scan for new X-ray attacks behind it.
+/// min_attacker() is a helper function used by see() to locate the least
+/// valuable attacker for the side to move, remove the attacker we just found
+/// from the bitboards and scan for new X-ray attacks behind it.
+
 template<int Pt>
 PieceType min_attacker(const Bitboard* bb, Square to, Bitboard stmAttackers,
 	Bitboard& occupied, Bitboard& attackers)
@@ -92,7 +93,8 @@ PieceType min_attacker<KING>(const Bitboard*, Square, Bitboard, Bitboard&, Bitbo
 	return KING; // No need to update bitboards: it is the last cycle
 }
 
-// CheckInfo constructor
+/// CheckInfo constructor
+
 CheckInfo::CheckInfo(const Position& pos)
 {
 	Color them = ~pos.side_to_move();
@@ -111,7 +113,8 @@ CheckInfo::CheckInfo(const Position& pos)
 	checkSquares[KING] = Bitboard();
 }
 
-// operator<<(Position) returns an ASCII representation of the position
+/// operator<<(Position) returns an ASCII representation of the position.
+
 std::ostream& operator<<(std::ostream& os, const Position& pos)
 {
 	string  boards = string("")
@@ -153,8 +156,9 @@ std::ostream& operator<<(std::ostream& os, const Position& pos)
 	return os;
 }
 
-// Position::init() initializes at startup the various arrays used to compute
-// hash keys.
+/// Position::init() initializes at startup the various arrays used to compute
+/// hash keys.
+
 void Position::init()
 {
 	PRNG rng(1070372);
@@ -168,8 +172,9 @@ void Position::init()
 	Zobrist::exclusion = rng.rand<uint64_t>();
 }
 
-// Position::operator=() creates a copy of 'pos' but detaching the state pointer
-// from the source to be self-consistent and not depending on any external data.
+/// Position::operator=() creates a copy of 'pos' but detaching the state pointer
+/// from the source to be self-consistent and not depending on any external data.
+
 Position& Position::operator=(const Position& pos)
 {
 	std::memcpy(this, &pos, sizeof(Position));
@@ -183,8 +188,9 @@ Position& Position::operator=(const Position& pos)
 	return *this;
 }
 
-// Position::clear() erases the position object to a pristine state, with an
-// empty board, white to move.
+/// Position::clear() erases the position object to a pristine state, with an
+/// empty board, white to move.
+
 void Position::clear()
 {
 	std::memset(this, 0, sizeof(Position));
@@ -196,9 +202,10 @@ void Position::clear()
 			pieceList[WHITE][i][j] = pieceList[BLACK][i][j] = SQ_NONE;
 }
 
-// Position::set() initializes the position object with the given FEN string.
-// This function is not very robust - make sure that input FENs are correct,
-// this is assumed to be the responsibility of the GUI.
+/// Position::set() initializes the position object with the given FEN string.
+/// This function is not very robust - make sure that input FENs are correct,
+/// this is assumed to be the responsibility of the GUI.
+
 void Position::set(const string& fenStr, bool isChess960, Thread* th)
 {
 	/*
@@ -249,7 +256,7 @@ void Position::set(const string& fenStr, bool isChess960, Thread* th)
 			sq += Square(token - '0'); // Advance the given number of files
 
 		else if (token == '/')
-			sq -= Square(18);//9+9
+			sq -= Square(18);
 
 		else if ((p = PieceToChar.find(token)) != string::npos)
 		{
@@ -287,10 +294,11 @@ void Position::set(const string& fenStr, bool isChess960, Thread* th)
 	assert(pos_is_ok());
 }
 
-// Position::set_state() computes the hash keys of the position, and other
-// data that once computed is updated incrementally as moves are made.
-// The function is only used when a new position is set up, and to verify
-// the correctness of the StateInfo data when running in debug mode.
+/// Position::set_state() computes the hash keys of the position, and other
+/// data that once computed is updated incrementally as moves are made.
+/// The function is only used when a new position is set up, and to verify
+/// the correctness of the StateInfo data when running in debug mode.
+
 void Position::set_state(StateInfo* si) const
 {
 	si->psq = SCORE_ZERO;
@@ -325,8 +333,9 @@ void Position::set_state(StateInfo* si) const
 			si->nonPawnMaterial[c] += pieceCount[c][pt] * PieceValue[MG][pt];
 }
 
-// Position::fen() returns a FEN representation of the position. In case of
-// Chess960 the Shredder-FEN notation is used. This is mainly a debugging function.
+/// Position::fen() returns a FEN representation of the position. In case of
+/// Chess960 the Shredder-FEN notation is used. This is mainly a debugging function.
+
 const string Position::fen() const
 {
 	std::ostringstream ss;
@@ -364,8 +373,9 @@ const string Position::fen() const
 	return ss.str();
 }
 
-// Position::game_phase() calculates the game phase interpolating total non-pawn
-// material between endgame and midgame limits.
+/// Position::game_phase() calculates the game phase interpolating total non-pawn
+/// material between endgame and midgame limits.
+
 Phase Position::game_phase() const
 {
 	Value npm = st->nonPawnMaterial[WHITE] + st->nonPawnMaterial[BLACK];
@@ -375,12 +385,12 @@ Phase Position::game_phase() const
 	return Phase(((npm - EgLimit) * PHASE_MIDGAME) / (MgLimit - EgLimit));
 }
 
-// Position::check_blockers() returns a bitboard of all the pieces with color
-// 'c' that are blocking check on the king with color 'kingColor'. A piece
-// blocks a check if removing that piece from the board would result in a
-// position where the king is in check. A check blocking piece can be a
-// pinned piece.
-//only pinned piece,not be candidate check, because king face to king case  
+/// Position::check_blockers() returns a bitboard of all the pieces with color
+/// 'c' that are blocking check on the king with color 'kingColor'. A piece
+/// blocks a check if removing that piece from the board would result in a
+/// position where the king is in check. A check blocking piece can be a
+/// pinned piece.
+
 Bitboard Position::check_blockers(Color c, Color kingColor) const
 {
 	Bitboard b, pinners, result;
@@ -462,7 +472,9 @@ Bitboard Position::discovered_check_candidates() const
 	return result;
 }
 
-// This function mainly calculates the position of our cannon
+/// Position::discovered_cannon_check_candidates() this function mainly
+/// calculates the position of our cannon.
+
 Bitboard Position::discovered_cannon_check_candidates() const
 {
 	Bitboard b;
@@ -497,8 +509,9 @@ Bitboard Position::discovered_cannon_face_king() const
 	return b;
 }
 
-// Position::attackers_to() computes a bitboard of all pieces which attack a
-// given square. Slider attacks use the occupied bitboard to indicate occupancy.
+/// Position::attackers_to() computes a bitboard of all pieces which attack a
+/// given square. Slider attacks use the occupied bitboard to indicate occupancy.
+
 Bitboard Position::attackers_to(Square s, Bitboard occupied) const
 {
 	return (PawnAttackTo[BLACK][s] & pieces(BLACK, PAWN))
@@ -511,7 +524,8 @@ Bitboard Position::attackers_to(Square s, Bitboard occupied) const
 		| (KingAttack[s] & pieces(KING));
 }
 
-// Position::legal() tests whether a pseudo-legal move is legal
+/// Position::legal() tests whether a pseudo-legal move is legal.
+
 bool Position::legal(Move m, Bitboard pinned) const
 {
 	assert(is_ok(m));
@@ -548,9 +562,10 @@ bool Position::legal(Move m, Bitboard pinned) const
 #endif
 }
 
-// Position::pseudo_legal() takes a random move and tests whether the move is
-// pseudo legal. It is used to validate moves from TT that can be corrupted
-// due to SMP concurrent access or hash position key aliasing.
+/// Position::pseudo_legal() takes a random move and tests whether the move is
+/// pseudo legal. It is used to validate moves from TT that can be corrupted
+/// due to SMP concurrent access or hash position key aliasing.
+
 bool Position::pseudo_legal(const Move m) const
 {
 	Color us = sideToMove;
@@ -597,7 +612,8 @@ bool Position::pseudo_legal(const Move m) const
 	return move_is_legal((*this), m);
 }
 
-// Position::gives_check() tests whether a pseudo-legal move gives a check
+/// Position::gives_check() tests whether a pseudo-legal move gives a check
+
 bool Position::gives_check(Move m, const CheckInfo& ci) const
 {
 	assert(is_ok(m));
@@ -627,9 +643,10 @@ bool Position::gives_check(Move m, const CheckInfo& ci) const
 	return false;
 }
 
-// Position::do_move() makes a move, and saves all information necessary
-// to a StateInfo object. The move is assumed to be legal. Pseudo-legal
-// moves should be filtered out before this function is called.
+/// Position::do_move() makes a move, and saves all information necessary
+/// to a StateInfo object. The move is assumed to be legal. Pseudo-legal
+/// moves should be filtered out before this function is called.
+
 void Position::do_move(Move m, StateInfo& newSt, bool givesCheck)
 {
 	assert(is_ok(m));
@@ -669,9 +686,7 @@ void Position::do_move(Move m, StateInfo& newSt, bool givesCheck)
 		// If the captured piece is a pawn, update pawn hash key, otherwise
 		// update non-pawn material.
 		if (captured == PAWN)
-		{
 			st->pawnKey ^= Zobrist::psq[them][PAWN][capsq];
-		}
 		else
 			st->nonPawnMaterial[them] -= PieceValue[MG][captured];
 
@@ -752,8 +767,9 @@ bool Position::in_check(Color c)
 	return false;
 }
 
-// Position::undo_move() unmakes a move. When it returns, the position should
-// be restored to exactly the same state as before the move was made.
+/// Position::undo_move() unmakes a move. When it returns, the position should
+/// be restored to exactly the same state as before the move was made.
+
 void Position::undo_move(Move m)
 {
 	assert(is_ok(m));
@@ -784,8 +800,9 @@ void Position::undo_move(Move m)
 	assert(pos_is_ok());
 }
 
-// Position::do(undo)_null_move() is used to do(undo) a "null move": It flips
-// the side to move without executing any move on the board.
+/// Position::do(undo)_null_move() is used to do(undo) a "null move": It flips
+/// the side to move without executing any move on the board.
+
 void Position::do_null_move(StateInfo& newSt)
 {
 	assert(!checkers());
@@ -815,9 +832,10 @@ void Position::undo_null_move()
 	sideToMove = ~sideToMove;
 }
 
-// Position::key_after() computes the new hash key after the given move. Needed
-// for speculative prefetch. It doesn't recognize special moves like castling,
-// en-passant and promotions.
+/// Position::key_after() computes the new hash key after the given move. Needed
+/// for speculative prefetch. It doesn't recognize special moves like castling,
+/// en-passant and promotions.
+
 uint64_t Position::key_after(Move m) const
 {
 	Color us = sideToMove;
@@ -833,8 +851,9 @@ uint64_t Position::key_after(Move m) const
 	return k ^ Zobrist::psq[us][pt][to] ^ Zobrist::psq[us][pt][from];
 }
 
-// Position::see() is a static exchange evaluator: It tries to estimate the
-// material gain or loss resulting from a move.
+/// Position::see() is a static exchange evaluator: It tries to estimate the
+/// material gain or loss resulting from a move.
+
 Value Position::see_sign(Move m) const
 {
 	assert(is_ok(m));
@@ -906,8 +925,9 @@ Value Position::see(Move m) const
 	return swapList[0];
 }
 
-// Position::is_draw() tests whether the position is drawn by 50-move rule
-// or by repetition. It does not detect stalemates.
+/// Position::is_draw() tests whether the position is drawn by 50-move rule
+/// or by repetition. It does not detect stalemates.
+
 bool Position::is_draw() const
 {
 	if (st->rule50 > 99 && (!checkers() || MoveList<LEGAL>(*this).size()))
@@ -957,8 +977,9 @@ int Position::is_repeat()const
 	return REPEATE_NONE;
 }
 
-// Position::flip() flips position with the white and black sides reversed. This
-// is only useful for debugging e.g. for finding evaluation symmetry bugs.
+/// Position::flip() flips position with the white and black sides reversed. This
+/// is only useful for debugging e.g. for finding evaluation symmetry bugs.
+
 void Position::flip()
 {
 	string f, token;
@@ -990,8 +1011,9 @@ void Position::flip()
 	assert(pos_is_ok());
 }
 
-// Position::pos_is_ok() performs some consistency checks for the position object.
-// This is meant to be helpful when debugging.
+/// Position::pos_is_ok() performs some consistency checks for the position object.
+/// This is meant to be helpful when debugging.
+
 bool Position::pos_is_ok(int* failedStep) const
 {
 	const bool Fast = false; // Quick (default) or full check?

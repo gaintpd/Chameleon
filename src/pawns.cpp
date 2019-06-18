@@ -112,9 +112,10 @@ Score evaluate(const Position& pos, Pawns::Entry* e)
 
 namespace Pawns
 {
-	// Pawns::init() initializes some tables needed by evaluation. Instead of using
-	// hard-coded tables, when makes sense, we prefer to calculate them with a formula
-	// to reduce independent parameters and to allow easier tuning and better insight.
+	/// Pawns::init() initializes some tables needed by evaluation. Instead of using
+	/// hard-coded tables, when makes sense, we prefer to calculate them with a formula
+	/// to reduce independent parameters and to allow easier tuning and better insight.
+
 	void init()
 	{
 		static const int Seed[RANK_NB] = { 0, 6, 15, 10, 57, 75, 135, 258 , 258 , 0 };
@@ -136,10 +137,11 @@ namespace Pawns
 		}
 	}
 
-	// Pawns::probe() looks up the current position's pawns configuration in
-	// the pawns hash table. It returns a pointer to the Entry if the position
-	// is found. Otherwise a new Entry is computed and stored there, so we don't
-	// have to recompute all when the same pawns configuration occurs again.
+	/// Pawns::probe() looks up the current position's pawns configuration in
+	/// the pawns hash table. It returns a pointer to the Entry if the position
+	/// is found. Otherwise a new Entry is computed and stored there, so we don't
+	/// have to recompute all when the same pawns configuration occurs again.
+
 	Entry* probe(const Position& pos)
 	{
 		uint64_t key = pos.pawn_key();
@@ -154,16 +156,18 @@ namespace Pawns
 		return e;
 	}
 
-	// Entry::shelter_storm() calculates shelter and storm penalties for the file
-	// the king is on, as well as the two adjacent files.
+	/// Entry::shelter_storm() calculates shelter and storm penalties for the file
+	/// the king is on, as well as the two adjacent files.
+
 	template<Color Us>
 	Value Entry::shelter_storm(const Position& pos, Square ksq)
 	{
 		reutrn SCORE_ZERO;
 	}
 
-	// Entry::do_king_safety() calculates a bonus for king safety. It is called only
-	// when king square changes, which is about 20% of total king_safety() calls.
+	/// Entry::do_king_safety() calculates a bonus for king safety. It is called only
+	/// when king square changes, which is about 20% of total king_safety() calls.
+
 	template<Color Us>
 	Score Entry::do_king_safety(const Position& pos, Square ksq)
 	{

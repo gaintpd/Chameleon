@@ -24,20 +24,20 @@
 #include <iomanip>
 #include <iostream>
 #include <sstream>
-#include <Windows.h>
+#include <mutex>
 
 #include "misc.h"
-#include "thread_win32.h"
 
 using namespace std;
 
 // Debug functions used mainly to collect run-time statistics
 static int64_t hits[2], means[2];
 
-// engine_info() returns the full name of the current Stockfish version. This
-// will be either "Stockfish <Tag> DD-MM-YY" (where DD-MM-YY is the date when
-// the program was compiled) or "Stockfish <Version>", depending on whether
-// Version is empty.
+/// engine_info() returns the full name of the current Stockfish version. This
+/// will be either "Stockfish <Tag> DD-MM-YY" (where DD-MM-YY is the date when
+/// the program was compiled) or "Stockfish <Version>", depending on whether
+/// Version is empty.
+
 const string engine_info(bool to_uci)
 {
 	stringstream s; // From compiler, format is "Sep 21 2008"
@@ -126,7 +126,7 @@ public:
 // the same time.
 std::ostream& operator<<(std::ostream& os, SyncCout sc)
 {
-	static Mutex m;
+	static std::mutex m;
 
 	if (sc == IO_LOCK)
 		m.lock();
@@ -140,9 +140,10 @@ std::ostream& operator<<(std::ostream& os, SyncCout sc)
 // Trampoline helper to avoid moving Logger to misc.h
 void start_logger(bool b) { Logger::start(b); }
 
-// prefetch() preloads the given address in L1/L2 cache. This is a non-blocking
-// function that doesn't stall the CPU waiting for data to be loaded from memory,
-// which can be quite slow.
+/// prefetch() preloads the given address in L1/L2 cache. This is a non-blocking
+/// function that doesn't stall the CPU waiting for data to be loaded from memory,
+/// which can be quite slow.
+
 #ifdef NO_PREFETCH
 
 void prefetch(void*) {}

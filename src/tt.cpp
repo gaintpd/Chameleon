@@ -28,9 +28,10 @@
 
 TranspositionTable TT; // Our global transposition table
 
-// TranspositionTable::resize() sets the size of the transposition table,
-// measured in megabytes. Transposition table consists of a power of 2 number
-// of clusters and each cluster consists of ClusterSize number of TTEntry.
+/// TranspositionTable::resize() sets the size of the transposition table,
+/// measured in megabytes. Transposition table consists of a power of 2 number
+/// of clusters and each cluster consists of ClusterSize number of TTEntry.
+
 void TranspositionTable::resize(size_t mbSize)
 {
 	size_t newClusterCount = size_t(1) << msb((mbSize * 1024 * 1024) / sizeof(Cluster));
@@ -53,20 +54,22 @@ void TranspositionTable::resize(size_t mbSize)
 	table = (Cluster*)((uintptr_t(mem) + CacheLineSize - 1) & ~(CacheLineSize - 1));
 }
 
-// TranspositionTable::clear() overwrites the entire transposition table
-// with zeros. It is called whenever the table is resized, or when the
-// user asks the program to clear the table (from the UCI interface).
+/// TranspositionTable::clear() overwrites the entire transposition table
+/// with zeros. It is called whenever the table is resized, or when the
+/// user asks the program to clear the table (from the UCI interface).
+
 void TranspositionTable::clear()
 {
 	std::memset(table, 0, clusterCount * sizeof(Cluster));
 }
 
-// TranspositionTable::probe() looks up the current position in the transposition
-// table. It returns true and a pointer to the TTEntry if the position is found.
-// Otherwise, it returns false and a pointer to an empty or least valuable TTEntry
-// to be replaced later. The replace value of an entry is calculated as its depth
-// minus 8 times its relative age. TTEntry t1 is considered more valuable than
-// TTEntry t2 if its replace value is greater than that of t2.
+/// TranspositionTable::probe() looks up the current position in the transposition
+/// table. It returns true and a pointer to the TTEntry if the position is found.
+/// Otherwise, it returns false and a pointer to an empty or least valuable TTEntry
+/// to be replaced later. The replace value of an entry is calculated as its depth
+/// minus 8 times its relative age. TTEntry t1 is considered more valuable than
+/// TTEntry t2 if its replace value is greater than that of t2.
+
 TTEntry* TranspositionTable::probe(const uint64_t key, bool& found) const
 {
 	TTEntry* const tte = first_entry(key);
@@ -95,8 +98,9 @@ TTEntry* TranspositionTable::probe(const uint64_t key, bool& found) const
 	return found = false, replace;
 }
 
-// Returns an approximation of the hashtable occupation during a search. The
-// hash is x permill full, as per UCI protocol.
+/// TranspositionTable::hashfull() returns an approximation of the hashtable occupation during a search. The
+/// hash is x permill full, as per UCI protocol.
+
 int TranspositionTable::hashfull() const
 {
 	int cnt = 0;
