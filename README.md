@@ -6,11 +6,11 @@
 
 > This distribution of Chameleon consists of the following files:
 
-  * README.md, the file you are currently reading.
+  >> * README.md, the file you are currently reading.
 
-  * LICENSE, a text file containing the GNU General Public License version 3.
+  >> * LICENSE, a text file containing the GNU General Public License version 3.
 
-  * src, a directory containing the full source code.
+  >> * src, a directory containing the full source code.
 
 ## Current Status: <del>End-of-life</del>
 
@@ -18,7 +18,7 @@
 
 ## Terms of use
 
-This program is free, and distributed under the **GNU General Public License version 3**
+> This program is free, and distributed under the **GNU General Public License version 3**
 (GPL v3). Essentially, this means that you are free to do almost exactly
 what you want with the program, including distributing it among your
 friends, making it available for download from your web site, selling
