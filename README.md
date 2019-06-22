@@ -16,7 +16,7 @@ This distribution of Chameleon consists of the following files:
 
 Currently, Chameleon has the following features that are not complete:
 
-  *** 6/22 Update: As the code structure is not suitable for future development, this version of Chameleon will no longer be updated. !!!
+  * 6/22 Update: As the code structure is not suitable for future development, this version of Chameleon will no longer be updated. !!!
   
   * The subforce value of each piece MG EG needs to be improved. [OK]
 
