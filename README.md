@@ -12,17 +12,9 @@ This distribution of Chameleon consists of the following files:
 
   * src, a directory containing the full source code.
 
-## Current Status
+## Current Status: <label style="color:red">End-of-life</label>
 
-Currently, Chameleon has the following features that are not complete:
-
-  * 6/22 Update: As the code structure is not suitable for future development, this version of Chameleon will no longer be updated. !!!
-  
-  * The subforce value of each piece MG EG needs to be improved. [OK]
-
-  * PSQT Bonus[PIECE_TYPE_NB][SQUARE_NB] values have been updated, but the values are still problematic and need to be improved. [OK]
-
-  * The eval function needs to be implemented and is now empty. [OK]
+6/22 Update: As the code structure is not suitable for future development, this version of Chameleon will no longer be updated.
 
 ## Terms of use
 
