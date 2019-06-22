@@ -142,16 +142,13 @@ namespace PSQT
 	{
 		for (PieceType pt = PAWN; pt <= KING; ++pt)
 		{
-			PieceValue[MG][pt] = PieceValue[MG][pt];
-			PieceValue[EG][pt] = PieceValue[EG][pt];
-
 			PieceValue[MG][make_piece(BLACK, pt)] = PieceValue[MG][pt];
 			PieceValue[EG][make_piece(BLACK, pt)] = PieceValue[EG][pt];
 
 			Score v = make_score(PieceValue[MG][pt], PieceValue[EG][pt]);
 
 			for (Square s = SQ_A0; s <= SQ_I9; ++s)
-				psq[BLACK][pt][~s] = -(psq[WHITE][pt][s] = v + Bonus[pt][s] / 2);
+				psq[BLACK][pt][~s] = -(psq[WHITE][pt][s] = v + Bonus[pt][s]);
 		}
 	}
 
