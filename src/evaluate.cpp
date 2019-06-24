@@ -261,8 +261,6 @@ namespace {
 		Bitboard b, bb;
 		Square s;
 		Score score = SCORE_ZERO;
-		return 	SCORE_ZERO;
-#if 0
 		const PieceType NextPt = (Us == WHITE ? Pt : PieceType(Pt + 1));
 		const Color Them = (Us == WHITE ? BLACK : WHITE);
 		const Bitboard OutpostRanks = (Us == WHITE ? Rank4BB | Rank5BB | Rank6BB
@@ -274,9 +272,7 @@ namespace {
 		while ((s = *pl++) != SQ_NONE)
 		{
 			// Find attacked squares, including x-ray attacks for bishops and rooks
-			b = Pt == BISHOP ? attacks_bb(s, pos.pieces() ^ pos.pieces(Us, CANNON))
-				: Pt == ROOK ? attacks_bb(s, pos.pieces() ^ pos.pieces(Us, ROOK, CANNON))
-				: pos.attacks_from<Pt>(s);
+			b = pos.attacks_from<Pt>(s);
 
 			if (ei.pinnedPieces[Us] & s)
 				b &= LineBB[pos.square<KING>(Us)][s];
@@ -322,20 +318,6 @@ namespace {
 				// Penalty for pawns on same color square of bishop
 				if (Pt == BISHOP)
 					score -= BishopPawns * ei.pi->pawns_on_same_color_squares(Us, s);
-
-				// An important Chess960 pattern: A cornered bishop blocked by a friendly
-				// pawn diagonally in front of it is a very serious problem, especially
-				// when that pawn is also blocked.
-				if (   Pt == BISHOP
-				    && pos.is_chess960()
-				    && (s == relative_square(Us, SQ_A1) || s == relative_square(Us, SQ_H1)))
-				{
-				    Square d = pawn_push(Us) + (file_of(s) == FILE_A ? DELTA_E : DELTA_W);
-				    if (pos.piece_on(s + d) == make_piece(Us, PAWN))
-				        score -= !pos.empty(s + d + pawn_push(Us))                ? TrappedBishopA1H1 * 4
-				                : pos.piece_on(s + d + d) == make_piece(Us, PAWN) ? TrappedBishopA1H1 * 2
-				                                                                  : TrappedBishopA1H1;
-				}
 			}
 
 			if (Pt == ROOK)
@@ -360,7 +342,7 @@ namespace {
 					if (((file_of(ksq) < FILE_E) == (file_of(s) < file_of(ksq)))
 						&& (rank_of(ksq) == rank_of(s) || relative_rank(Us, ksq) == RANK_1)
 						&& !ei.pi->semiopen_side(Us, file_of(ksq), file_of(s) < file_of(ksq)))
-						score -= (TrappedRook - make_score(mob * 22, 0)) * (1 + !pos.can_castle(Us));
+						score -= (TrappedRook - make_score(mob * 22, 0));
 				}
 			}
 		}
@@ -370,7 +352,6 @@ namespace {
 
 		// Recursively call evaluate_pieces() of next piece type until KING excluded
 		return score - evaluate_pieces<DoTrace, Them, NextPt>(pos, ei, mobility, mobilityArea);
-#endif
 	}
 
 	template<>
@@ -710,6 +691,7 @@ namespace {
 				else
 					sf = ScaleFactor(46 * sf / SCALE_FACTOR_NORMAL);
 			}
+
 			// Endings where weaker side can place his king in front of the opponent's
 			// pawns are drawish.
 			else if (abs(eg_value(score)) <= BishopValueEg
