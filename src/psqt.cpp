@@ -148,7 +148,7 @@ namespace PSQT
 			Score v = make_score(PieceValue[MG][pt], PieceValue[EG][pt]);
 
 			for (Square s = SQ_A0; s <= SQ_I9; ++s)
-				psq[BLACK][pt][~s] = -(psq[WHITE][pt][s] = v + Bonus[pt][s]);
+				psq[BLACK][pt][~s] = -(psq[WHITE][pt][s] = v + Bonus[pt][s] / 2);
 		}
 	}
 
