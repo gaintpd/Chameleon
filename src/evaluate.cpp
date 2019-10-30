@@ -536,7 +536,7 @@ namespace {
 	}
 
 	/// evaluate_passed_pawns() evaluates the passed pawns of the given color
-
+#if 0
 	template<Color Us, bool DoTrace>
 	Score evaluate_passed_pawns(const Position& pos, const EvalInfo& ei) {
 
@@ -606,7 +606,7 @@ namespace {
 		// Add the scores to the middlegame and endgame eval
 		return score * Weights[PassedPawns];
 	}
-
+#endif
 	/// evaluate_space() computes the space evaluation for a given side. The
 	/// space evaluation is a simple bonus based on the number of safe squares
 	/// available for minor pieces on the central four files on ranks 2--4. Safe
@@ -768,8 +768,8 @@ Value Eval::evaluate(const Position& pos)
 		- evaluate_threats<BLACK, DoTrace>(pos, ei);
 
 	// Evaluate passed pawns, we need full attack information including king
-	score += evaluate_passed_pawns<WHITE, DoTrace>(pos, ei)
-		- evaluate_passed_pawns<BLACK, DoTrace>(pos, ei);
+	//score += evaluate_passed_pawns<WHITE, DoTrace>(pos, ei)
+	//	- evaluate_passed_pawns<BLACK, DoTrace>(pos, ei);
 
 	// If both sides have only pawns, score for potential unstoppable pawns
 	if (!pos.non_pawn_material(WHITE) && !pos.non_pawn_material(BLACK))

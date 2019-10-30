@@ -38,6 +38,7 @@
 // Countermoves store the move that refute a previous one. Entries are stored
 // using only the moving piece and destination square, hence two moves with
 // different origin but same destination and piece will be considered identical.
+
 template<typename T, bool CM = false>
 struct Stats
 {

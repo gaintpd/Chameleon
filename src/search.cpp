@@ -67,8 +67,8 @@ namespace {
 	enum NodeType { Root, PV, NonPV };
 
 	// Razoring and futility margin based on depth
-	const int razor_margin[4] = { 483, 570, 603, 554 };
-	Value futility_margin(Depth d) { return Value(200 * d); }
+	const int razor_margin[4] = { 0, 570, 603, 554 };
+	Value futility_margin(Depth d) { return Value(150 * d); }
 
 	// Futility and reductions lookup tables, initialized at startup
 	int FutilityMoveCounts[2][16];  // [improving][depth]
@@ -171,8 +171,8 @@ void Search::init() {
 
 	for (int d = 0; d < 16; ++d)
 	{
-		FutilityMoveCounts[0][d] = int(2.4 + 0.773 * pow(d + 0.00, 1.8));
-		FutilityMoveCounts[1][d] = int(2.9 + 1.045 * pow(d + 0.49, 1.8));
+		FutilityMoveCounts[0][d] = int(2.4 + 0.74 * pow(d, 1.78));
+		FutilityMoveCounts[1][d] = int(3.0 + 1.00 * pow(d, 2.00));
 	}
 }
 
@@ -614,7 +614,7 @@ namespace {
 
 		assert(-VALUE_INFINITE <= alpha && alpha < beta && beta <= VALUE_INFINITE);
 		assert(PvNode || (alpha == beta - 1));
-		assert(DEPTH_ZERO < depth && depth < DEPTH_MAX);
+		assert(DEPTH_ZERO <= depth && depth < DEPTH_MAX);
 
 		Move pv[MAX_PLY + 1], quietsSearched[64];
 		StateInfo st;
@@ -801,7 +801,6 @@ namespace {
 		// Step 8. Null move search with verification search (is omitted in PV nodes)
 		if (!PvNode
 			&&  depth >= 2 * ONE_PLY
-			&&  depth <= 16 * ONE_PLY
 			&&  eval >= beta
 			&& pos.non_pawn_material(pos.side_to_move()))
 		{
@@ -810,7 +809,7 @@ namespace {
 			assert(eval - beta >= 0);
 
 			// Null move dynamic reduction based on depth and value
-			Depth R = ((823 + 67 * depth) / 256 + std::min((eval - beta) / PawnValueMg, 3)) * ONE_PLY;
+			Depth R = ((823 + 70 * depth) / 256 + std::min((eval - beta) / PawnValueMg, 3)) * ONE_PLY;
 
 			pos.do_null_move(st);
 			assert(!pos.in_check(pos.side_to_move()));
@@ -826,7 +825,7 @@ namespace {
 				if (nullValue >= VALUE_MATE_IN_MAX_PLY)
 					nullValue = beta;
 
-				if (depth < 6/* + Time.elapsed() / 8000*/ * ONE_PLY && abs(beta) < VALUE_KNOWN_WIN)
+				if (depth < 12 * ONE_PLY && abs(beta) < VALUE_KNOWN_WIN)
 					return nullValue;
 
 				// Do verification search at high depths

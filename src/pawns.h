@@ -90,7 +90,7 @@ namespace Pawns
 		Score do_king_safety(const Position& pos, Square ksq);
 
 		template<Color Us>
-		Value shelter_storm(const Position& pos, Square ksq);
+		Score shelter_storm(const Position& pos, Square ksq);
 
 		uint64_t key;
 		Score score;

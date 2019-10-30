@@ -26,6 +26,9 @@
 #include <cstdint>
 #include <cstdio>
 
+// Bitboard class is used to is used to save the current checkerboard
+// information, and to manipulate the bitboard used.
+
 class Bitboard
 {
 public:

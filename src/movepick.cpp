@@ -70,7 +70,7 @@ MovePicker::MovePicker(const Position& p, Move ttm, Depth d, const HistoryStats&
 	const CounterMovesStats& cmh, Move cm, Search::Stack* s)
 	: pos(p), history(h), counterMovesHistory(&cmh), ss(s), countermove(cm), depth(d)
 {
-	assert(d > DEPTH_ZERO);
+	assert(d >= DEPTH_ZERO);
 
 	stage = pos.checkers() ? EVASION : MAIN_SEARCH;
 	ttMove = ttm && pos.pseudo_legal(ttm) ? ttm : MOVE_NONE;

@@ -160,9 +160,9 @@ namespace Pawns
 	/// the king is on, as well as the two adjacent files.
 
 	template<Color Us>
-	Value Entry::shelter_storm(const Position& pos, Square ksq)
+	Score Entry::shelter_storm(const Position& pos, Square ksq)
 	{
-		reutrn SCORE_ZERO;
+		return SCORE_ZERO;
 	}
 
 	/// Entry::do_king_safety() calculates a bonus for king safety. It is called only

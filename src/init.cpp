@@ -21,7 +21,7 @@
 */
 
 #include <algorithm>
-
+#include <cstring>
 #include "init.h"
 #include "bitcount.h"
 #include "magics.h"

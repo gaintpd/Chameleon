@@ -427,14 +427,23 @@ Square msb(Bitboard b);
 
 #  else // Assumed gcc or compatible compiler
 
-inline Square lsb(Bitboard b) { // Assembly code by Heinz van Saanen
-	Bitboard idx;
+inline Square lsb(uint64_t b) {
+	return Square(__builtin_ctzll(b));
+}
 
-	if (b.bb[0]) { __asm__("bsfq %1, %0": "=r"(idx) : "rm"(b)); }
+inline Square msb(uint64_t b) {
+	return Square(63 ^ __builtin_clzll(b));
+}
+
+inline Square lsb(Bitboard b) { // Assembly code by Heinz van Saanen
+	//Bitboard idx;
+	unsigned long idx;
+
+	if (b.bb[0]) { idx = __builtin_ctzll(b.bb[0]); }
 	else if (b.bb[1])
 	{
 
-		__asm__("bsfq %1, %0": "=r"(idx) : "rm"(b));
+		idx = __builtin_ctzll(b.bb[1]);
 		idx += 45;
 	}
 
@@ -444,15 +453,16 @@ inline Square lsb(Bitboard b) { // Assembly code by Heinz van Saanen
 inline Square msb(Bitboard b)
 {
 
-	Bitboard idx;
+	//Bitboard idx;
+	unsigned long idx;
 
 	if (b.bb[1])
 	{
 
-		__asm__("bsrq %1, %0": "=r"(idx) : "rm"(b));
+		idx = 127 ^ __builtin_clzll(b.bb[1]);
 		idx += 45;
 	}
-	else if (b.bb[0]) { __asm__("bsrq %1, %0": "=r"(idx) : "rm"(b)); }
+	else if (b.bb[0]) { idx = 127 ^ __builtin_clzll(b.bb[0]); }
 
 	return (Square)idx;
 }

@@ -33,9 +33,9 @@ using namespace std;
 // Debug functions used mainly to collect run-time statistics
 static int64_t hits[2], means[2];
 
-/// engine_info() returns the full name of the current Stockfish version. This
-/// will be either "Stockfish <Tag> DD-MM-YY" (where DD-MM-YY is the date when
-/// the program was compiled) or "Stockfish <Version>", depending on whether
+/// engine_info() returns the full name of the current Chameleon version. This
+/// will be either "Chameleon <Tag> DD-MM-YY" (where DD-MM-YY is the date when
+/// the program was compiled) or "Chameleon <Version>", depending on whether
 /// Version is empty.
 
 const string engine_info(bool to_uci)
@@ -44,9 +44,7 @@ const string engine_info(bool to_uci)
 
 	if (to_uci)
 		s << "id name Chameleon" << "\n"
-			<< "id user Default" << "\n"
-			<< "id author Wilbert Lee" << "\n"
-			<< "id copyright 2017 Wilbert Lee";
+		<< "id author Wilbert Lee" << "";
 
 	return s.str();
 }

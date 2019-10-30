@@ -83,8 +83,8 @@
 #endif
 
 const int MAX_PLY = 128;
-const int MAX_MOVES = 256;
-const int MAX_HASH_MB = 1048576;
+const int MAX_MOVES = 128;
+const int MAX_HASH_MB = 131072;
 const int MAX_THREAD_COUNT = 64;
 const int MIN_HASH_MB = 16;
 const int MIN_THREAD_COUNT = 1;
