@@ -33,6 +33,7 @@
 int main(int argc, char *argv[])
 {
   UCI::init();
+  Tune::init();
   PSQT::init();
   Bitboards::init();
   Position::init();

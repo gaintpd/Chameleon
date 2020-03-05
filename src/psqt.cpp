@@ -132,6 +132,7 @@ namespace PSQT
       S(0, 0), S(0, 0), S(0, 0), S(0, 0), S(0, 0), S(0, 0), S(0, 0), S(0, 0), S(0, 0)
     }
   };
+
 #undef S
   Score psq[COLOR_NB][PIECE_TYPE_NB][SQUARE_NB];
 

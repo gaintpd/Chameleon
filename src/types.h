@@ -46,7 +46,6 @@
 #include <cstdint>
 #include <cstdlib>
 #include <string>
-#include "bitboard.h"
 
 #if defined(_MSC_VER)
 // Disable some silly and noisy warning from MSVC compiler
@@ -150,7 +149,7 @@ enum Value : int
 
   PawnValueMg = 50, PawnValueEg = 150,
   AdvisorValueMg = 76, AdvisorValueEg = 86,
-  BishopValueMg = 96, BishopValueEg = 86,
+  BishopValueMg = 76, BishopValueEg = 86,
   KnightValueMg = 102, KnightValueEg = 131,
   CannonValueMg = 131, CannonValueEg = 102,
   RookValueMg = 304, RookValueEg = 323,
@@ -567,5 +566,8 @@ inline const std::string square_to_string(Square s)
 }
 
 extern Value PieceValue[PHASE_NB][PIECE_NB];
+
+#include "tune.h" // Global visibility to tuning setup
+#include "bitboard.h"
 
 #endif // #ifndef TYPES_H_INCLUDED
